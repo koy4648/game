@@ -26,7 +26,7 @@ const QUESTIONS: Question[] = [
     options: ["분홍색", "보라색", "파란색", "연두색"],
     correctIndex: 2,
     correctComment: "맞아! 파란색이 제일 좋아 💙",
-    wrongComment: "틀렸어! 파란색이 제일 좋은데 😅",
+    wrongComment: "땡! 몰랐단 말인가~?😅",
   },
   {
     question: "영서의 이상형 리스트 중 해당되지 않는 것은?",
@@ -37,8 +37,8 @@ const QUESTIONS: Question[] = [
       "잘 먹는 사람",
     ],
     correctIndex: 1,
-    correctComment: "정확해! 솔직한 건 이상형 리스트에 없었어 🎯",
-    wrongComment: "아니야~ 솔직한 사람이 해당 안 되는 거였어 😄",
+    correctComment: "맞았어! 내 이상형 리스트에 솔직한 사람은 따로 없었어 🎯",
+    wrongComment: "아니야~ 솔직한 사람도 좋지만 이상형까지는? 😄",
   },
   {
     question: "상화가 영서에게 전달해준 내용이 아닌 것은?",
@@ -49,14 +49,14 @@ const QUESTIONS: Question[] = [
       "클라이밍을 좋아함",
     ],
     correctIndex: 3,
-    correctComment: "맞아! 클라이밍은 전달 내용에 없었어 ✅",
-    wrongComment: "틀렸어! 클라이밍을 좋아한다는 내용은 없었어 🤔",
+    correctComment: "맞아! 진성이의 클라이밍 사랑은 소개팅하면서 알게 되었지? ✅",
+    wrongComment: "일부러 틀렸지?! 🤔",
   },
   {
     question: "다섯 가지 사랑의 언어 중 영서에게 가장 중요한 것은?",
     options: ["함께하는 시간", "선물", "봉사", "인정"],
     correctIndex: 0,
-    correctComment: "완벽해! 함께하는 시간이 제일 소중해 🥰",
+    correctComment: "맞았어~ 함께하는 시간이 제일 소중해 🥰",
     wrongComment: "아쉬워~ 함께하는 시간이 제일 중요해 💕",
   },
 ];
