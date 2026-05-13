@@ -10,26 +10,26 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useGame, STAGES } from "@/contexts/GameContext";
 
-// 지도 v5 가로형. 흑백 상태도 같은 이미지를 필터링해서 비율이 틀어지지 않게 유지한다.
-const MAP_COLOR = "/webdev-static-assets/travel-map-v5.png";
+// 지도 v6 가로형. 흑백 상태도 같은 이미지를 필터링해서 비율이 틀어지지 않게 유지한다.
+const MAP_COLOR = "/webdev-static-assets/travel-map-v6.png";
 const MAP_BW = MAP_COLOR;
 const MAP_ASPECT_RATIO = "2752 / 1536";
 
 // 각 장소의 핀 위치 (지도 이미지 기준 %, 시각적으로 확인한 위치)
 // STAGES 순서에 맞춘 진행 순서: 합정 → 시청 → 에버랜드 → 제주도 → 코엑스 → 포항 → 칠갑산 → 그민페 → 대전 → 벚꽃스냅 → 보성 → 야구장
 const MAP_PINS: Record<number, { x: number; y: number; label: string }> = {
-   1: { x: 10.0, y: 47.0, label: "합정" },        // 왼쪽 카페 (곰 마스코트)
-   2: { x: 28.0, y: 27.0, label: "시청" },        // 벚꽃 건물 + 커플
-   3: { x: 76.0, y: 68.0, label: "에버랜드" },    // 놀이공원
-   4: { x: 82.0, y: 85.0, label: "제주도" },      // 제주 섬
-   5: { x: 40.0, y: 43.0, label: "코엑스" },      // 아쿠아리움 (물고기)
-   6: { x: 82.5, y: 33.0, label: "포항" },        // 등대 (오른쪽)
-   7: { x: 48.0, y: 62.0, label: "칠갑산" },      // 단풍산 (가운데 아래)
-   8: { x: 48.0, y: 18.0, label: "그민페" },      // 성화 (올림픽 링)
-   9: { x: 58.0, y: 43.0, label: "대전" },        // 다리 + 도시
-  10: { x: 20.0, y: 68.0, label: "벚꽃스냅" },    // 벚꽃 강 (왼쪽 아래)
-  11: { x: 70.0, y: 52.0, label: "보성" },        // 녹차밭 (오른쪽 중간)
-  12: { x: 63.5, y: 22.0, label: "야구장" },      // HOME RUN 야구장
+   1: { x: 12.6, y: 39.5, label: "합정" },        // 왼쪽 카페
+   2: { x: 24.5, y: 61.0, label: "시청" },        // 벚꽃 건물 + 커플
+   3: { x: 30.0, y: 28.5, label: "에버랜드" },    // 놀이공원
+   4: { x: 88.5, y: 89.0, label: "제주도" },      // 제주 섬
+   5: { x: 47.8, y: 50.5, label: "코엑스" },      // 아쿠아리움
+   6: { x: 83.7, y: 57.5, label: "포항" },        // 등대 + 배
+   7: { x: 45.5, y: 78.0, label: "칠갑산" },      // 단풍산
+   8: { x: 52.8, y: 29.0, label: "그민페" },      // 올림픽공원
+   9: { x: 61.5, y: 57.0, label: "대전" },        // 다리 + 도시
+  10: { x: 19.8, y: 78.5, label: "벚꽃스냅" },    // 벚꽃 강
+  11: { x: 65.0, y: 85.0, label: "보성" },        // 녹차밭
+  12: { x: 73.5, y: 26.0, label: "야구장" },      // 잠실 야구장
 };
 
 // 전구 장식
