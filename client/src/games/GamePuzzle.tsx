@@ -278,7 +278,7 @@ function JejuFreePuzzle({ stage, onComplete }: Props) {
                 제주도 퍼즐 완성!
               </h2>
               <p className="text-sm mt-2" style={{ color: "oklch(0.90 0.05 60)" }}>
-                첫 여행의 베스트 컷을 다시 맞췄어 💕
+                첫 여행의 마지막 순간! 피곤했지만 정말 즐거웠지? 💕
               </p>
             </div>
           </div>
