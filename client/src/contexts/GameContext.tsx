@@ -62,7 +62,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🍊",
     bg: "/webdev-static-assets/stage7-jeju-new.png",
     caricature: "/webdev-static-assets/caricature-jeju.png",
-    gameType: "catch",
+    gameType: "puzzle",
     description: "제주도 여행",
     intro: "우리의 첫 여행은 제주도~ 피곤했지만 즐거웠던 순간을 다시 기억해보자",
     lat: 33.489,
