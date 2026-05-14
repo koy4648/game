@@ -1,14 +1,17 @@
 /*
  * Stage 7 - 칠갑산: 가위바위보 계단 오르기 게임
- * 진성의 입장에서 플레이하며, 영서가 무사히 칠갑산 정상에 먼저 도착하도록 눈치껏 져주어야 한다.
+ * 진성의 입장에서 플레이하며, 정해진 승패 흐름에 따라 칠갑산 계단을 오른다.
  *
  * 상태 변수:
  *   yeongseo_step: 0~5 (5 = 정상 도착)
  *   jinseong_step: 0~5
  *   is_yeongseo_invincible: jinseong_step == 4 팝업에서 [예] 선택 후 true
  *
+ * 고정 승패 순서:
+ *   영서 승 → 진성 승 → 진성 승 → 진성 승 → 영서 승 → 영서 승 → 진성 승
+ *
  * 특수 이벤트:
- *   jinseong_step == 4 도달 시 팝업 → [아니오] 깨물 이미지 → [예] 무적 모드 발동
+ *   jinseong_step == 4 도달 시 팝업 → [예] 깨물 이미지 → [아니오] 무적 모드 발동
  *   무적 모드: 유저가 내는 패에 상관없이 영서가 무조건 이기는 패를 냄
  *
  * 클리어 조건:
@@ -33,12 +36,25 @@ const IMG_BITE = "/webdev-static-assets/caricature-bite.png";
 
 type Choice = "가위" | "바위" | "보";
 type RoundResult = "win" | "lose" | "draw";
+type RoundWinner = "yeongseo" | "jinseong" | "draw";
 
 const CHOICE_EMOJI: Record<Choice, string> = {
   가위: "✌️",
   바위: "✊",
   보: "🖐️",
 };
+
+const FIXED_ROUND_WINNERS: RoundWinner[] = [
+  "yeongseo",
+  "jinseong",
+  "draw",
+  "jinseong",
+  "jinseong",
+  "draw",
+  "yeongseo",
+  "yeongseo",
+  "jinseong",
+];
 
 // 유저가 낸 패를 이기는 패 반환 (무적 모드용)
 function getWinningChoice(userChoice: Choice): Choice {
@@ -47,10 +63,11 @@ function getWinningChoice(userChoice: Choice): Choice {
   return "가위";
 }
 
-// 랜덤 패 반환
-function getRandomChoice(): Choice {
-  const choices: Choice[] = ["가위", "바위", "보"];
-  return choices[Math.floor(Math.random() * 3)];
+// 유저가 낸 패에 지는 패 반환 (진성 승리용)
+function getLosingChoice(userChoice: Choice): Choice {
+  if (userChoice === "가위") return "보";
+  if (userChoice === "바위") return "가위";
+  return "바위";
 }
 
 // 승패 판별 (진성 기준)
@@ -175,6 +192,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
   // ── 게임 상태 ──
   const [yeongseoStep, setYeongseoStep] = useState(0);
   const [jinseongStep, setJinseongStep] = useState(0);
+  const [roundIndex, setRoundIndex] = useState(0);
   const [isYeongseoInvincible, setIsYeongseoInvincible] = useState(false);
 
   // ── UI 상태 ──
@@ -226,15 +244,22 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
     setIsProcessing(true);
     setUserChoice(choice);
 
-    // 영서의 패 결정 (무적 모드면 항상 이기는 패)
-    const opponentChoice = isYeongseoInvincible
-      ? getWinningChoice(choice)
-      : getRandomChoice();
+    const plannedWinner = FIXED_ROUND_WINNERS[roundIndex] ?? "yeongseo";
+    let opponentChoice: Choice;
+
+    if (isYeongseoInvincible || plannedWinner === "yeongseo") {
+      opponentChoice = getWinningChoice(choice);
+    } else if (plannedWinner === "jinseong") {
+      opponentChoice = getLosingChoice(choice);
+    } else {
+      opponentChoice = choice;
+    }
 
     setYeongseoChoice(opponentChoice);
 
     const result = judgeResult(choice, opponentChoice);
     setRoundResult(result);
+    setRoundIndex((current) => current + 1);
 
     if (result === "draw") {
       setResultMessage("비겼습니다! 다시 내세요.");
@@ -271,16 +296,16 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
     }
   };
 
-  // 팝업 [아니오] → 깨물 이미지 표시 후 팝업 다시 노출
-  const handlePopupNo = () => {
+  // 팝업 [예] → 깨물 이미지 표시 후 팝업 다시 노출
+  const handlePopupYes = () => {
     setPopupBiteVisible(true);
     setTimeout(() => {
       setPopupBiteVisible(false);
     }, 1400);
   };
 
-  // 팝업 [예] → 무적 모드 발동
-  const handlePopupYes = () => {
+  // 팝업 [아니오] → 무적 모드 발동
+  const handlePopupNo = () => {
     setShowSpecialPopup(false);
     setIsYeongseoInvincible(true);
     setIsProcessing(false);
@@ -290,6 +315,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
   const resetGame = () => {
     setYeongseoStep(0);
     setJinseongStep(0);
+    setRoundIndex(0);
     setIsYeongseoInvincible(false);
     setStarted(false);
     setCleared(false);
@@ -375,7 +401,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
           <div className="flex items-end justify-center gap-6 w-full max-w-sm">
             {/* 영서 */}
             <div className="flex flex-col items-center gap-1 relative">
-              {/* 영서 말풍선 (랜덤 패 또는 결과) */}
+              {/* 영서 말풍선 (고정 승패 흐름에 맞춘 패 또는 결과) */}
               {yeongseoChoice && (
                 <div
                   style={{
@@ -415,7 +441,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
                     lineHeight: 1.4,
                   }}
                 >
-                  내가 너무 느려서<br />진성이 먼저 간다ㅜㅜ
+                  진성아아..<br /> 나 두고 갈 거 아니지?
                 </div>
               )}
               <img
@@ -507,8 +533,8 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
                 roundResult === "lose"
                   ? "oklch(0.80 0.14 350)"
                   : roundResult === "win"
-                  ? "oklch(0.80 0.12 55)"
-                  : "oklch(0.80 0.05 280)",
+                    ? "oklch(0.80 0.12 55)"
+                    : "oklch(0.80 0.05 280)",
               fontWeight: "bold",
               transition: "all 0.2s",
               animation: roundResult ? "popIn 0.2s ease-out" : "none",
@@ -558,7 +584,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
             영서 {yeongseoStep}/{TOTAL_STEPS}칸 · 진성 {jinseongStep}/{TOTAL_STEPS}칸
             {isYeongseoInvincible && (
               <span style={{ color: "oklch(0.80 0.14 350)", marginLeft: 8 }}>
-                ✨ 영서 무적 모드!
+                ✨ 금강불괴 영서 등장!
               </span>
             )}
           </div>
@@ -697,7 +723,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
             backdropFilter: "blur(4px)",
           }}
         >
-          {/* 깨물 이미지 (아니오 클릭 시) */}
+          {/* 깨물 이미지 (예 클릭 시) */}
           {popupBiteVisible && (
             <div
               style={{
@@ -735,7 +761,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
                   fontFamily: "'Gowun Dodum', sans-serif",
                 }}
               >
-                깨물어버릴 거야! 😤
+                에에에??? 다시 생각하도록!💢
               </div>
             </div>
           )}
