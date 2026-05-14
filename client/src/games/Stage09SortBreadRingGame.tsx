@@ -39,8 +39,8 @@ const ITEM_LABEL: Record<ItemType, string> = {
 
 const TARGET_SCORE = 20;
 const PENALTY = 5;
-const SPAWN_INTERVAL_MS = 850;
-const ITEM_SPEED_PER_SECOND = 24;
+const SPAWN_INTERVAL_MS = 400;
+const ITEM_SPEED_PER_SECOND = 50;
 
 function createItem(id: number, y = -16): ConveyorItem {
   return {
