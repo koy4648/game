@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
 const COUPLE_IMG = "/webdev-static-assets/caricature-selfsnap_nobg.png";
-// const COUPLE_IMG = "/webdev-static-assets/character-couple-v5.png";
 const MAP_PREVIEW = "/webdev-static-assets/travel-map-v4.png";
 
 // 별 위치 고정 (랜덤 방지)

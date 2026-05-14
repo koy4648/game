@@ -8,7 +8,7 @@ export default function GuideBear({ message, onClose, hintMode = false }: GuideB
   return (
     <div className="flex items-end gap-3 mb-4 animate-bounce-in max-w-sm mx-auto">
       <img
-        src="/webdev-static-assets/mangrujin-nobg.png"
+        src="/webdev-static-assets/guide-bear1.png"
         alt="망곰이"
         className="w-16 h-16 object-contain flex-shrink-0"
         style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }}

@@ -155,7 +155,7 @@ export default function StagePage() {
 }
 
 function StageIntro({ stage, onStart }: { stage: (typeof STAGES)[0]; onStart: () => void }) {
-  const portrait = stage.caricature || "/webdev-static-assets/character-couple-v5.png";
+  const portrait = stage.caricature || "/webdev-static-assets/caricature-selfsnap_nobg.png";
 
   return (
     <div
