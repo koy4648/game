@@ -1,6 +1,6 @@
 /*
- * Stage 10 - 보성 녹차마라톤: 리듬 달리기 게임
- * 좌우 버튼을 번갈아 눌러서 달리기! 목표 거리 달성하면 클리어!
+ * Stage 7 & Stage 11 - 칠갑산/보성 녹차마라톤: 리듬 달리기 게임
+ * 좌우 버튼을 번갈아 눌러서 달리기. 현재는 두 스테이지가 같은 러닝 게임을 공유한다.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { StageInfo } from "@/contexts/GameContext";
@@ -11,7 +11,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GameRun({ stage, onComplete }: Props) {
+export default function Stage07And11RunGame({ stage, onComplete }: Props) {
   const GOAL = 300;
   const TIME = 45;
   const [distance, setDistance] = useState(0);

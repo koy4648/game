@@ -7,12 +7,23 @@ export interface StageInfo {
   emoji: string;
   bg: string;
   caricature?: string;
-  gameType: string;
+  gameType: StageGameType;
   description: string;
   intro: string;
   lat: number;
   lng: number;
 }
+
+export type StageGameType =
+  | "tasteQuiz"
+  | "heartClick"
+  | "everlandDodge"
+  | "puzzle"
+  | "spotDifference"
+  | "rhythmRun"
+  | "bakery"
+  | "cherryBlossom"
+  | "baseball";
 
 // 12개 스테이지 (날짜순)
 export const STAGES: StageInfo[] = [
@@ -23,7 +34,7 @@ export const STAGES: StageInfo[] = [
     emoji: "☕",
     bg: "/webdev-static-assets/stage1-hapjeong.png",
     caricature: "/webdev-static-assets/caricature-hapjeong-v2.png",
-    gameType: "chat",
+    gameType: "tasteQuiz",
     description: "스케쥴합정에서의 첫 만남",
     intro: "처음 만난 진성과 영서! 진성이는 영서의 취향을 잘 파악할 수 있을까~?",
     lat: 37.549,
@@ -36,7 +47,7 @@ export const STAGES: StageInfo[] = [
     emoji: "💑",
     bg: "/webdev-static-assets/stage3-cityhall-new.png",
     caricature: "/webdev-static-assets/caricature-cityhall-v2.png",
-    gameType: "clicker",
+    gameType: "heartClick",
     description: "드디어 사귀게 된 날",
     intro: "많이 보기는 했는데.. 언제까지 기다려야 하지? 긴가민가한 이 순간!",
     lat: 37.566,
@@ -49,7 +60,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🎢",
     bg: "/webdev-static-assets/stage4-everland.png",
     caricature: "/webdev-static-assets/caricature-everland.png",
-    gameType: "runner",
+    gameType: "everlandDodge",
     description: "에버랜드 데이트",
     intro: "회사로부터 도망치고 살아남아보자! 사실 피해야 할 건 회사 연락만이 아닐지도..?",
     lat: 37.294,
@@ -75,7 +86,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🐠",
     bg: "/webdev-static-assets/stage5-aquarium-new.png",
     caricature: "/webdev-static-assets/caricature-coex.png",
-    gameType: "fish",
+    gameType: "spotDifference",
     description: "코엑스 아쿠아리움 데이트",
     intro: "물속 세상처럼 반짝였던 아쿠아리움 데이트! 어떤 추억을 건져올릴까?",
     lat: 37.513,
@@ -101,7 +112,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🍂",
     bg: "/webdev-static-assets/stage6-pohang-new.png",
     caricature: "/webdev-static-assets/caricature-chilgap.png",
-    gameType: "run",
+    gameType: "rhythmRun",
     description: "칠갑산 단풍 등산",
     intro: "가벼운 등산이라며… 초보자도 갈 수 있다며!ㅠㅠㅠ",
     lat: 36.337,
@@ -113,7 +124,7 @@ export const STAGES: StageInfo[] = [
     date: "2025.10.18",
     emoji: "🎵",
     bg: "/webdev-static-assets/stage5-aquarium-new.png",
-    gameType: "clicker",
+    gameType: "heartClick",
     description: "그랜드민트페스티벌",
     intro: "처음으로 간 페스티벌! 진성이는 본인도 모르는 사이 영서 친구들에게 유명인사가 되어 있었다?!",
     lat: 37.521,
@@ -126,7 +137,7 @@ export const STAGES: StageInfo[] = [
     emoji: "💍",
     bg: "/webdev-static-assets/stage8-daejeon-new.png",
     caricature: "/webdev-static-assets/caricature-ring.png",
-    gameType: "bake",
+    gameType: "bakery",
     description: "성심당 딸기요거롤 & 커플링",
     intro: "1주년 기념 데이트! 반지도 만들고 딸기요거롤도 먹은 영서는 너무나도 행복해했다~",
     lat: 36.351,
@@ -139,7 +150,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🌸",
     bg: "/webdev-static-assets/stage9-cherry-new.png",
     caricature: "/webdev-static-assets/caricature-cherry.png",
-    gameType: "petal",
+    gameType: "cherryBlossom",
     description: "양재천 벚꽃 스냅 촬영",
     intro: "작가님이 인정한 공식 I커플 :) 같은 사진을 맞춰주세요!",
     lat: 37.467,
@@ -152,7 +163,7 @@ export const STAGES: StageInfo[] = [
     emoji: "🍵",
     bg: "/webdev-static-assets/stage10-boseong-new.png",
     caricature: "/webdev-static-assets/caricature-greentea.png",
-    gameType: "run",
+    gameType: "rhythmRun",
     description: "보성 녹차마라톤",
     intro: "영서는 10km, 진성이는 42km! 도합 52km! 열심히 뛰어보자~",
     lat: 34.771,

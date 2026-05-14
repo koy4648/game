@@ -17,7 +17,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GameClicker({ stage, onComplete }: Props) {
+export default function Stage02HeartClickGame({ stage, onComplete }: Props) {
   const GOAL = 7;
   const TIME_LIMIT = 5;
   const [hearts, setHearts] = useState(0);

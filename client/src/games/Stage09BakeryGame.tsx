@@ -1,5 +1,5 @@
 /*
- * Stage 8 - 대전 1주년: 성심당 딸기요거롤 받기 게임
+ * Stage 9 - 대전 1주년: 성심당 딸기요거롤 받기 게임
  * 빵이 컨베이어 벨트에서 나오면 클릭해서 받기!
  */
 import { useState, useEffect, useRef } from "react";
@@ -17,7 +17,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GameBake({ stage, onComplete }: Props) {
+export default function Stage09BakeryGame({ stage, onComplete }: Props) {
   const GOAL = 10;
   const TIME = 35;
   const [items, setItems] = useState<BreadItem[]>([]);

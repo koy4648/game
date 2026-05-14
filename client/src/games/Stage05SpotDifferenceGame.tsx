@@ -150,7 +150,7 @@ function ImagePanel({
   );
 }
 
-export default function GameFish({ stage, onComplete }: Props) {
+export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) {
   const [started, setStarted] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [foundIds, setFoundIds] = useState<string[]>([]);

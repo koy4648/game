@@ -1,5 +1,5 @@
 /*
- * Stage 11 - 잠실 야구장: 홈런 타격 타이밍 게임
+ * Stage 12 - 잠실 야구장: 홈런 타격 타이밍 게임
  * 공이 스트라이크 존에 들어올 때 탭하면 홈런!
  * 3번 홈런 치면 클리어!
  */
@@ -14,7 +14,7 @@ interface Props {
 
 type SwingResult = "homerun" | "hit" | "miss" | "strike" | null;
 
-export default function GameBaseball({ stage, onComplete }: Props) {
+export default function Stage12BaseballGame({ stage, onComplete }: Props) {
   const GOAL_HOMERUNS = 3;
   const [homeruns, setHomeruns] = useState(0);
   const [strikes, setStrikes] = useState(0);

@@ -3,33 +3,31 @@
  * 스테이지 ID에 따라 적절한 미니게임 컴포넌트를 렌더링
  */
 import { useParams, useLocation } from "wouter";
-import { STAGES } from "@/contexts/GameContext";
+import { STAGES, type StageGameType } from "@/contexts/GameContext";
 import { useGame } from "@/contexts/GameContext";
 import { useEffect, useState } from "react";
 
-// 게임 컴포넌트들 (lazy import 대신 직접)
-import GameChat from "@/games/GameChat";
-import GameCatch from "@/games/GameCatch";
-import GameClicker from "@/games/GameClicker";
-import GameRunner from "@/games/GameRunner";
-import GameFish from "@/games/GameFish";
-import GamePuzzle from "@/games/GamePuzzle";
-import GameBake from "@/games/GameBake";
-import GamePetal from "@/games/GamePetal";
-import GameRun from "@/games/GameRun";
-import GameBaseball from "@/games/GameBaseball";
+// 실제 진행에 쓰는 게임 컴포넌트들. 파일명에 Stage 번호와 게임명을 같이 둔다.
+import Stage01TasteQuizGame from "@/games/Stage01TasteQuizGame";
+import Stage02HeartClickGame from "@/games/Stage02HeartClickGame";
+import Stage03EverlandDodgeGame from "@/games/Stage03EverlandDodgeGame";
+import Stage05SpotDifferenceGame from "@/games/Stage05SpotDifferenceGame";
+import Stage04And06PuzzleGame from "@/games/Stage04And06PuzzleGame";
+import Stage09BakeryGame from "@/games/Stage09BakeryGame";
+import Stage10CherryBlossomGame from "@/games/Stage10CherryBlossomGame";
+import Stage07And11RunGame from "@/games/Stage07And11RunGame";
+import Stage12BaseballGame from "@/games/Stage12BaseballGame";
 
-const GAME_MAP: Record<string, React.ComponentType<{ stage: (typeof STAGES)[0]; onComplete: () => void }>> = {
-  chat: GameChat,
-  catch: GameCatch,
-  clicker: GameClicker,
-  runner: GameRunner,
-  fish: GameFish,
-  puzzle: GamePuzzle,
-  bake: GameBake,
-  petal: GamePetal,
-  run: GameRun,
-  baseball: GameBaseball,
+const GAME_MAP: Record<StageGameType, React.ComponentType<{ stage: (typeof STAGES)[0]; onComplete: () => void }>> = {
+  tasteQuiz: Stage01TasteQuizGame,          // Stage 1: 합정 취향 맞추기 퀴즈
+  heartClick: Stage02HeartClickGame,        // Stage 2 시청 / Stage 8 GMF 임시 재사용
+  everlandDodge: Stage03EverlandDodgeGame,  // Stage 3: 에버랜드 이모지 피하기
+  puzzle: Stage04And06PuzzleGame,           // Stage 4 제주 4x4 퍼즐 / Stage 6 포항 슬롯 퍼즐
+  spotDifference: Stage05SpotDifferenceGame,// Stage 5: 아쿠아리움 틀린그림찾기
+  rhythmRun: Stage07And11RunGame,           // Stage 7 칠갑산 / Stage 11 보성 마라톤
+  bakery: Stage09BakeryGame,                // Stage 9: 대전 빵/반지 게임
+  cherryBlossom: Stage10CherryBlossomGame,  // Stage 10: 벚꽃스냅
+  baseball: Stage12BaseballGame,            // Stage 12: 잠실 야구장
 };
 
 export default function StagePage() {

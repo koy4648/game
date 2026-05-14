@@ -66,7 +66,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GameChat({ stage, onComplete }: Props) {
+export default function Stage01TasteQuizGame({ stage, onComplete }: Props) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [affection, setAffection] = useState(START_SCORE);
   const [showBite, setShowBite] = useState(false);

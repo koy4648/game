@@ -1,5 +1,5 @@
 /*
- * Stage 9 - 400일 벚꽃: 벚꽃잎 클릭 모으기
+ * Stage 10 - 400일 벚꽃스냅: 벚꽃잎 클릭 모으기
  * 떨어지는 벚꽃잎을 40개 클릭하면 클리어!
  */
 import { useState, useEffect, useRef } from "react";
@@ -20,7 +20,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GamePetal({ stage, onComplete }: Props) {
+export default function Stage10CherryBlossomGame({ stage, onComplete }: Props) {
   const GOAL = 40;
   const TIME = 40;
   const [petals, setPetals] = useState<Petal[]>([]);

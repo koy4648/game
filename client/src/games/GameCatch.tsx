@@ -1,6 +1,6 @@
 /*
- * Stage 2 (문래 생일) & Stage 7 (제주도): 떨어지는 아이템 받기 게임
- * 30초 안에 목표 점수 달성하면 클리어!
+ * Legacy unused game: 떨어지는 아이템 받기
+ * 현재 GameContext.STAGES에서는 사용하지 않는다.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { StageInfo } from "@/contexts/GameContext";

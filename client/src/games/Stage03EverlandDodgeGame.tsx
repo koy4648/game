@@ -26,7 +26,7 @@ const ITEM_SIZE = 8;
 const PLAYER_SPEED = 2.4;
 const HAZARDS = ["📱", "📞", "💬", "📧", "💻", "📊", "🎢", "🍦", "🎠", "🎡"];
 
-export default function GameRunner({ stage, onComplete }: Props) {
+export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
   const [started, setStarted] = useState(false);
   const [items, setItems] = useState<FallingItem[]>([]);
   const [player, setPlayer] = useState({ x: 50, y: 82 });

@@ -22,7 +22,7 @@ const JEJU_IMAGE = "/webdev-static-assets/stage4-jeju-puzzle.png";
 const JEJU_ORIGINAL_IMAGE = "/webdev-static-assets/stage4-orig.jpg";
 const POHANG_IMAGE = "/webdev-static-assets/stage6-pohang.png";
 
-export default function GamePuzzle({ stage, onComplete }: Props) {
+export default function Stage04And06PuzzleGame({ stage, onComplete }: Props) {
   if (stage.id === 4) {
     return <JejuFreePuzzle stage={stage} onComplete={onComplete} />;
   }
