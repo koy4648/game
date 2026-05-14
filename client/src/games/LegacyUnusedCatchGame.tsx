@@ -20,7 +20,7 @@ interface Props {
   onComplete: () => void;
 }
 
-export default function GameCatch({ stage, onComplete }: Props) {
+export default function LegacyUnusedCatchGame({ stage, onComplete }: Props) {
   const isJeju = stage.id === 7;
   const GOAL = isJeju ? 15 : 12;
   const TIME = 30;

@@ -11,22 +11,28 @@ import { useEffect, useState } from "react";
 import Stage01TasteQuizGame from "@/games/Stage01TasteQuizGame";
 import Stage02HeartClickGame from "@/games/Stage02HeartClickGame";
 import Stage03EverlandDodgeGame from "@/games/Stage03EverlandDodgeGame";
+import Stage04PuzzleGame from "@/games/Stage04PuzzleGame";
 import Stage05SpotDifferenceGame from "@/games/Stage05SpotDifferenceGame";
-import Stage04And06PuzzleGame from "@/games/Stage04And06PuzzleGame";
-import Stage09BakeryGame from "@/games/Stage09BakeryGame";
-import Stage10CherryBlossomGame from "@/games/Stage10CherryBlossomGame";
-import Stage07And11RunGame from "@/games/Stage07And11RunGame";
+import Stage06PohangScratchGame from "@/games/Stage06PohangScratchGame";
+import Stage07RockPaperScissorsStairsGame from "@/games/Stage07RockPaperScissorsStairsGame";
+import Stage08RecognizedPersonQuizGame from "@/games/Stage08RecognizedPersonQuizGame";
+import Stage09SortBreadRingGame from "@/games/Stage09SortBreadRingGame";
+import Stage10SamePhotoMatchGame from "@/games/Stage10SamePhotoMatchGame";
+import Stage11DinoRunGame from "@/games/Stage11DinoRunGame";
 import Stage12BaseballGame from "@/games/Stage12BaseballGame";
 
 const GAME_MAP: Record<StageGameType, React.ComponentType<{ stage: (typeof STAGES)[0]; onComplete: () => void }>> = {
   tasteQuiz: Stage01TasteQuizGame,          // Stage 1: 합정 취향 맞추기 퀴즈
-  heartClick: Stage02HeartClickGame,        // Stage 2 시청 / Stage 8 GMF 임시 재사용
+  heartClick: Stage02HeartClickGame,        // Stage 2: 시청 하트 연타
   everlandDodge: Stage03EverlandDodgeGame,  // Stage 3: 에버랜드 이모지 피하기
-  puzzle: Stage04And06PuzzleGame,           // Stage 4 제주 4x4 퍼즐 / Stage 6 포항 슬롯 퍼즐
+  puzzle: Stage04PuzzleGame,                // Stage 4: 제주 4x4 퍼즐
   spotDifference: Stage05SpotDifferenceGame,// Stage 5: 아쿠아리움 틀린그림찾기
-  rhythmRun: Stage07And11RunGame,           // Stage 7 칠갑산 / Stage 11 보성 마라톤
-  bakery: Stage09BakeryGame,                // Stage 9: 대전 빵/반지 게임
-  cherryBlossom: Stage10CherryBlossomGame,  // Stage 10: 벚꽃스냅
+  scratchOff: Stage06PohangScratchGame,     // Stage 6: 포항 스크래치 오프
+  rpsStairs: Stage07RockPaperScissorsStairsGame, // Stage 7: 칠갑산 가위바위보 계단
+  recognizedPersonQuiz: Stage08RecognizedPersonQuizGame, // Stage 8: 진성이를 알아본 사람 퀴즈
+  sortBreadRing: Stage09SortBreadRingGame,  // Stage 9: 빵/반지 좌우 분류
+  samePhotoMatch: Stage10SamePhotoMatchGame,// Stage 10: 같은 사진 위치 맞추기
+  dinoRun: Stage11DinoRunGame,              // Stage 11: 공룡게임 스타일 달리기
   baseball: Stage12BaseballGame,            // Stage 12: 잠실 야구장
 };
 
