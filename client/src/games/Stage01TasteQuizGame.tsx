@@ -26,7 +26,14 @@ const QUESTIONS: Question[] = [
     options: ["분홍색", "보라색", "파란색", "연두색"],
     correctIndex: 2,
     correctComment: "맞아! 파란색이 제일 좋아 💙",
-    wrongComment: "땡! 몰랐단 말인가~?😅",
+    wrongComment: "오잉 여기서 틀리면 안되는데..!",
+  },
+  {
+    question: "영서가 가장 좋아하는 터치드 노래는?",
+    options: ["불시", "ALIVE", "달춤", "HIGHLIGHT"],
+    correctIndex: 2,
+    correctComment: "나도 4개 중에 고르기 어려웠어 💕",
+    wrongComment: "나도 4개 중에 고르기 어려웠어 😅",
   },
   {
     question: "영서의 이상형 리스트 중 해당되지 않는 것은?",
@@ -41,7 +48,7 @@ const QUESTIONS: Question[] = [
     wrongComment: "아니야~ 솔직한 사람도 좋지만 이상형까지는? 😄",
   },
   {
-    question: "상화가 영서에게 전달해준 내용이 아닌 것은?",
+    question: "상화가 영서에게 미리 전달해준 내용이 아닌 것은?",
     options: [
       "교회를 다니는 사람이었으면 좋겠음",
       "호모포비아가 아니어야 함",
@@ -57,7 +64,7 @@ const QUESTIONS: Question[] = [
     options: ["함께하는 시간", "선물", "봉사", "인정"],
     correctIndex: 0,
     correctComment: "맞았어~ 함께하는 시간이 제일 소중해 🥰",
-    wrongComment: "아쉬워~ 함께하는 시간이 제일 중요해 💕",
+    wrongComment: "함께하는 시간이 제일 중요해 💕",
   },
 ];
 
@@ -209,13 +216,13 @@ export default function Stage01TasteQuizGame({ stage, onComplete }: Props) {
                       background: isAnswer
                         ? "oklch(0.72 0.18 140 / 0.25)"
                         : isWrong
-                        ? "oklch(0.72 0.12 350 / 0.25)"
-                        : "oklch(0.22 0.06 275 / 0.8)",
+                          ? "oklch(0.72 0.12 350 / 0.25)"
+                          : "oklch(0.22 0.06 275 / 0.8)",
                       border: isAnswer
                         ? "1px solid oklch(0.72 0.18 140 / 0.7)"
                         : isWrong
-                        ? "1px solid oklch(0.72 0.12 350 / 0.7)"
-                        : "1px solid oklch(1 0 0 / 15%)",
+                          ? "1px solid oklch(0.72 0.12 350 / 0.7)"
+                          : "1px solid oklch(1 0 0 / 15%)",
                       color: "oklch(0.90 0.05 60)",
                       opacity: selectedOption !== null && !isSelected && !isAnswer ? 0.45 : 1,
                       fontFamily: "'Gowun Dodum', sans-serif",
