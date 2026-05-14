@@ -1,13 +1,12 @@
 /*
- * Home.tsx — 프로포즈 사이트 인트로 페이지
+ * Home.tsx — 인트로 페이지
  * 디자인: 네이비 밤하늘 + 전구 조명 + 카와이 일러스트 + 골드 포인트
- * 레퍼런스: 서울 여행 지도 스타일 (memory-card-bg.png)
- * 영서(여자친구) → 진성(남자친구) 프로포즈
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
-const COUPLE_IMG = "/webdev-static-assets/character-couple-v5.png";
+const COUPLE_IMG = "/webdev-static-assets/caricature-selfsnap_nobg.png";
+// const COUPLE_IMG = "/webdev-static-assets/character-couple-v5.png";
 const MAP_PREVIEW = "/webdev-static-assets/travel-map-v4.png";
 
 // 별 위치 고정 (랜덤 방지)
@@ -154,7 +153,7 @@ export default function Home() {
             }}
           >
             <span style={{ color: "oklch(0.78 0.14 55)", fontSize: "0.75rem", fontFamily: "'Gowun Dodum', sans-serif", letterSpacing: "0.1em" }}>
-              ✦ 우리의 여행 ✦
+              ✦ 행복했던 시간들 톺아보기 ✦
             </span>
           </div>
           <h1
@@ -214,7 +213,7 @@ export default function Home() {
         >
           <p style={{ color: "oklch(0.88 0.03 60)", fontSize: "0.9rem", lineHeight: 1.7, fontFamily: "'Noto Sans KR', sans-serif" }}>
             우리가 함께한 소중한 순간들을<br />
-            게임으로 되돌아보는 여행이야 🗺️
+            되돌아보는 여행이야 🗺️
           </p>
           <div
             style={{
