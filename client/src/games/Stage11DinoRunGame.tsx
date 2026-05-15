@@ -1,20 +1,15 @@
 /*
- * Stage 11 - 보성 녹차마라톤: 2D 횡스크롤 달리기 게임
+ * Stage 11 - 보성 녹차마라톤: 2D 픽셀 아트 횡스크롤 달리기 게임
+ *
+ * 디자인 컨셉: 레트로 도트 픽셀 아트 × 보성 녹차밭
+ *   - canvas-image-rendering: pixelated (저해상도 업스케일)
+ *   - 모든 배경/캐릭터/UI를 픽셀 단위 fillRect 도트로 그림
+ *   - 팔레트: 녹차 그린 계열 + 레트로 베이지/브라운 + 하늘 블루
+ *   - HUD: 픽셀 테두리 박스, 도트 하트, 레트로 폰트
+ *   - 팝업: 픽셀 아트 대화창 스타일 (8px 격자 테두리)
  *
  * Step 1: 영서 10km  (내부 점수 10000)
  * Step 2: 진성 42.195km (내부 점수 42195)
- *
- * 물리: requestAnimationFrame 기반 게임 루프, 중력 적용 점프
- * 충돌: AABB 박스 충돌 감지, 무적 1.5초
- * 아이템: 에너지 겔 (+500 보너스)
- * 목숨: 3개 (Step 전환 시 리셋)
- *
- * 거리 표시: 내부 정수 / 1000 → 소수점 3자리 (예: 10.000 km)
- *
- * 디자인: 별빛 동화 여행 (Dreamy Fairytale Night Sky)
- *   - 딥 네이비/미드나잇 퍼플 배경에 골드·핑크 포인트
- *   - 캔버스: 새벽 녹차밭 → 별빛 야간 마라톤 분위기
- *   - HUD: 글라스모피즘 카드, 팝업: card-glow 패턴
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
@@ -27,7 +22,7 @@ interface Props {
 }
 
 type GameStatus = "idle" | "playing" | "gameover" | "step_clear" | "cleared";
-type SpawnType = "obstacle" | "item";
+type SpawnType  = "obstacle" | "item";
 
 interface Sprite {
   id: number;
@@ -41,33 +36,36 @@ interface FloatEffect {
   x: number;
   y: number;
   life: number;
-  color: string;
 }
 
-// ─── 상수 ────────────────────────────────────────────────────────────────────
-const CANVAS_W = 680;
-const CANVAS_H = 240;
-const GROUND_Y = 178;
-const PLAYER_W = 68;
-const PLAYER_H = 84;
-const PLAYER_X = 88;
+// ─── 저해상도 캔버스 상수 (픽셀 아트용 작은 해상도 → CSS로 업스케일) ──────
+const PX = 3;            // 1 도트 = 3 CSS px (업스케일 배율)
+const CW  = 240;         // 캔버스 내부 너비 (도트)
+const CH  = 80;          // 캔버스 내부 높이 (도트)
+const GY  = 58;          // 바닥 y (도트)
 
-const SPRITE_W = 52;
-const SPRITE_H = 52;
+const PLW = 14;          // 플레이어 너비 (도트)
+const PLH = 18;          // 플레이어 높이 (도트)
+const PLX = 22;          // 플레이어 고정 x (도트)
 
-const GRAVITY = 0.62;
-const JUMP_VY = -14.5;
-const MAX_FALL = 18;
+const OBW = 10;          // 장애물 너비
+const OBH = 10;          // 장애물 높이
+const ITW = 8;           // 아이템 너비
+const ITH = 8;           // 아이템 높이
+
+const GRAVITY   = 0.22;
+const JUMP_VY   = -4.8;
+const MAX_FALL  = 5;
 
 const STEP1_TARGET = 10000;
 const STEP2_TARGET = 42195;
-const GEL_BONUS = 500;
-const MAX_LIVES = 3;
+const GEL_BONUS    = 500;
+const MAX_LIVES    = 3;
 const INVINCIBLE_MS = 1500;
 
 const STEP_CONFIG = {
-  1: { scrollSpeed: 4.2, spawnInterval: 95,  itemChance: 0.28, scorePerFrame: 3 },
-  2: { scrollSpeed: 5.5, spawnInterval: 75,  itemChance: 0.30, scorePerFrame: 4 },
+  1: { scrollSpeed: 1.5, spawnInterval: 90,  itemChance: 0.28, scorePerFrame: 3 },
+  2: { scrollSpeed: 2.0, spawnInterval: 72,  itemChance: 0.30, scorePerFrame: 4 },
 } as const;
 
 // 이미지 경로
@@ -76,31 +74,254 @@ const IMG_JINSEONG  = "/webdev-static-assets/caricature-run-jinseong.png";
 const IMG_OBSTACLE  = "/webdev-static-assets/obstacle-bush.png";
 const IMG_GEL       = "/webdev-static-assets/item-energy-gel.png";
 
-// ─── 팔레트 (캔버스 내부용) ──────────────────────────────────────────────────
-// Step 1: 새벽 녹차밭 (딥 그린 → 미드나잇 퍼플 그라디언트)
-const PALETTE_S1 = {
-  skyTop:    "#0d1b2a",   // 딥 네이비
-  skyBot:    "#1a3a2a",   // 딥 그린
-  hillFar:   "rgba(20,60,30,0.55)",
-  hillMid:   "rgba(30,80,40,0.40)",
-  ground:    "#1e4a28",
-  groundStr: "rgba(100,220,120,0.10)",
-  starColor: "rgba(200,255,200,0.7)",
-  moonColor: "#c8f0d0",
-  pathLine:  "rgba(120,220,140,0.25)",
+// ─── 보성 녹차밭 픽셀 팔레트 ─────────────────────────────────────────────────
+const PAL = {
+  // 하늘
+  sky1:      "#b8e4f9",   // 연하늘
+  sky2:      "#7ec8e3",   // 하늘
+  sky3:      "#d4f0ff",   // 구름 밝은 면
+  cloud:     "#f0faff",
+  // 녹차밭
+  tea1:      "#2d6a1f",   // 진한 녹차
+  tea2:      "#3d8a2a",   // 녹차
+  tea3:      "#5aaa3a",   // 밝은 녹차
+  tea4:      "#7acc50",   // 연녹차
+  // 흙/길
+  path:      "#c8a46a",   // 황토 길
+  pathDark:  "#a07840",   // 진한 황토
+  pathLine:  "#e8c888",   // 길 줄무늬
+  // 나무/언덕
+  hill1:     "#1a4a10",
+  hill2:     "#2a6018",
+  hill3:     "#3a7a22",
+  // 픽셀 UI
+  uiBg:      "#1a2e0a",   // UI 배경 (진한 녹차)
+  uiBorder:  "#5aaa3a",   // UI 테두리
+  uiText:    "#e8f8d0",   // UI 텍스트
+  uiGold:    "#f8d840",   // 골드 강조
+  uiRed:     "#e84040",   // 빨강 (게임오버)
+  uiPink:    "#f880a0",   // 핑크
+  // 기타
+  white:     "#ffffff",
+  black:     "#000000",
+  shadow:    "#00000044",
 };
-// Step 2: 새벽 야간 마라톤 (딥 네이비 → 미드나잇 퍼플)
-const PALETTE_S2 = {
-  skyTop:    "#0a0d1e",
-  skyBot:    "#1a1040",
-  hillFar:   "rgba(30,20,70,0.55)",
-  hillMid:   "rgba(50,30,90,0.40)",
-  ground:    "#1a1535",
-  groundStr: "rgba(160,120,255,0.10)",
-  starColor: "rgba(220,200,255,0.8)",
-  moonColor: "#e8d8ff",
-  pathLine:  "rgba(180,140,255,0.20)",
-};
+
+// ─── 도트 드로우 헬퍼 ────────────────────────────────────────────────────────
+// 픽셀 단위 좌표를 실제 캔버스 px로 변환해 fillRect
+function dot(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, w = 1, h = 1) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+// 픽셀 테두리 박스 (8비트 스타일)
+function pixelBox(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  bg: string, border: string, borderW = 1
+) {
+  dot(ctx, x, y, bg, w, h);
+  // 테두리
+  dot(ctx, x, y, border, w, borderW);           // 상단
+  dot(ctx, x, y + h - borderW, border, w, borderW); // 하단
+  dot(ctx, x, y, border, borderW, h);           // 좌측
+  dot(ctx, x + w - borderW, y, border, borderW, h); // 우측
+}
+
+// 텍스트 (캔버스 내장 폰트 - 픽셀 느낌)
+function pixelText(
+  ctx: CanvasRenderingContext2D,
+  text: string, x: number, y: number,
+  color: string, size = 5, align: CanvasTextAlign = "left"
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = `bold ${size}px monospace`;
+  ctx.textAlign = align;
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+// ─── 픽셀 아트 드로우 함수들 ─────────────────────────────────────────────────
+
+// 하늘 + 구름
+function drawSky(ctx: CanvasRenderingContext2D, cloudOff: number) {
+  // 하늘 그라디언트 (도트 수평 줄로 표현)
+  const skyColors = [
+    PAL.sky2, PAL.sky2, PAL.sky1, PAL.sky1, PAL.sky1,
+    PAL.sky1, PAL.sky1, PAL.sky1, PAL.sky1, PAL.sky1,
+    PAL.sky1, PAL.sky1, PAL.sky1, PAL.sky1, PAL.sky1,
+  ];
+  for (let row = 0; row < GY; row++) {
+    const c = skyColors[Math.min(row, skyColors.length - 1)];
+    dot(ctx, 0, row, c, CW, 1);
+  }
+
+  // 구름 (픽셀 도트)
+  const clouds = [
+    { x: 30,  y: 6,  w: 18, h: 5 },
+    { x: 90,  y: 10, w: 14, h: 4 },
+    { x: 160, y: 5,  w: 22, h: 6 },
+    { x: 210, y: 12, w: 12, h: 3 },
+  ];
+  for (const cl of clouds) {
+    const cx = ((cl.x - cloudOff % CW) + CW) % CW;
+    // 구름 도트 패턴
+    dot(ctx, cx,       cl.y + 2, PAL.cloud, cl.w,     cl.h - 2);
+    dot(ctx, cx + 2,   cl.y,     PAL.cloud, cl.w - 4, 2);
+    dot(ctx, cx + 1,   cl.y + 1, PAL.sky3,  cl.w - 2, 1);
+    // 구름이 화면 끝을 넘어가면 반대쪽에도 그리기
+    if (cx + cl.w > CW) {
+      const cx2 = cx - CW;
+      dot(ctx, cx2,       cl.y + 2, PAL.cloud, cl.w,     cl.h - 2);
+      dot(ctx, cx2 + 2,   cl.y,     PAL.cloud, cl.w - 4, 2);
+    }
+  }
+}
+
+// 원거리 산/언덕 (픽셀 실루엣)
+function drawHills(ctx: CanvasRenderingContext2D, off: number) {
+  // 언덕 프로파일 (y 오프셋 배열, 각 x 도트마다)
+  const profile = [8,7,6,5,4,4,3,3,3,4,5,6,7,8,9,10,11,12,12,11,10,9,8,7,6,5,4,3,2,2,2,3,4,5,6,7,8,9,10,10];
+  const pw = profile.length;
+  for (let x = 0; x < CW; x++) {
+    const px = ((x + Math.round(off)) % pw + pw) % pw;
+    const topY = GY - 14 - profile[px];
+    // 언덕 3레이어
+    dot(ctx, x, topY,      PAL.hill1, 1, GY - topY);
+    dot(ctx, x, topY,      PAL.hill2, 1, 2);
+    dot(ctx, x, topY + 2,  PAL.hill3, 1, 1);
+  }
+}
+
+// 녹차밭 줄 (계단식 차나무 행)
+function drawTeaField(ctx: CanvasRenderingContext2D, off: number) {
+  // 바닥 기본색
+  dot(ctx, 0, GY, PAL.path, CW, CH - GY);
+
+  // 황토 길 (중앙 주자 경로)
+  dot(ctx, 0, GY,     PAL.path,     CW, 4);
+  dot(ctx, 0, GY + 1, PAL.pathDark, CW, 1);
+
+  // 길 줄무늬 (스크롤)
+  const stripeOff = Math.round(off) % 12;
+  for (let x = -stripeOff; x < CW; x += 12) {
+    dot(ctx, x, GY + 2, PAL.pathLine, 6, 1);
+  }
+
+  // 녹차밭 (바닥 아래 영역)
+  dot(ctx, 0, GY + 4, PAL.tea1, CW, CH - GY - 4);
+
+  // 차나무 행 (픽셀 도트 패턴)
+  const rowOff = Math.round(off * 0.8) % 16;
+  for (let x = -rowOff; x < CW; x += 16) {
+    // 차나무 픽셀 모양
+    dot(ctx, x,     GY + 5, PAL.tea2, 6, 3);
+    dot(ctx, x + 1, GY + 4, PAL.tea3, 4, 1);
+    dot(ctx, x + 2, GY + 3, PAL.tea4, 2, 1);
+    dot(ctx, x + 8, GY + 6, PAL.tea2, 5, 2);
+    dot(ctx, x + 9, GY + 5, PAL.tea3, 3, 1);
+  }
+
+  // 원거리 녹차밭 (더 작고 빠르게 스크롤)
+  const farOff = Math.round(off * 0.4) % 10;
+  for (let x = -farOff; x < CW; x += 10) {
+    dot(ctx, x,     GY - 4, PAL.hill2, 4, 2);
+    dot(ctx, x + 1, GY - 5, PAL.hill3, 2, 1);
+  }
+}
+
+// 장애물 (픽셀 덤불/돌)
+function drawObstacle(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null) {
+  const y = GY - OBH;
+  if (img) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, x, y, OBW, OBH);
+    ctx.restore();
+    return;
+  }
+  // 픽셀 아트 덤불
+  dot(ctx, x + 1, y + 5, PAL.tea1, 8, 5);
+  dot(ctx, x,     y + 6, PAL.tea1, 10, 4);
+  dot(ctx, x + 2, y + 3, PAL.tea2, 6, 4);
+  dot(ctx, x + 3, y + 2, PAL.tea3, 4, 3);
+  dot(ctx, x + 4, y + 1, PAL.tea4, 2, 2);
+  dot(ctx, x + 1, y + 4, PAL.tea3, 2, 1);
+  dot(ctx, x + 7, y + 4, PAL.tea3, 2, 1);
+  // 그림자
+  dot(ctx, x + 1, GY, PAL.shadow, 8, 1);
+}
+
+// 에너지 겔 아이템 (픽셀 캡슐)
+function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null, frame: number) {
+  const y = GY - ITH - 2 - Math.round(Math.sin(frame * 0.12) * 1.5);
+  if (img) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, x, y, ITW, ITH);
+    ctx.restore();
+    return;
+  }
+  // 픽셀 아트 캡슐 (골드)
+  dot(ctx, x + 1, y,     PAL.uiGold, 6, 1);
+  dot(ctx, x,     y + 1, PAL.uiGold, 8, 6);
+  dot(ctx, x + 1, y + 7, PAL.uiGold, 6, 1);
+  // 하이라이트
+  dot(ctx, x + 1, y + 1, PAL.white,  2, 2);
+  // 번개 기호
+  dot(ctx, x + 3, y + 2, PAL.black,  1, 4);
+  dot(ctx, x + 4, y + 2, PAL.black,  2, 2);
+  dot(ctx, x + 2, y + 4, PAL.black,  2, 2);
+}
+
+// 플레이어 (픽셀 도트 캐릭터)
+function drawPlayer(
+  ctx: CanvasRenderingContext2D,
+  py: number,
+  img: HTMLImageElement | null,
+  frame: number,
+  isStep2: boolean,
+  grounded: boolean
+) {
+  if (img) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    // 달리기 애니메이션: 착지 시 살짝 스쿼시
+    const scaleY = grounded ? (1 - Math.abs(Math.sin(frame * 0.25)) * 0.05) : 1;
+    const drawH  = Math.round(PLH * scaleY);
+    const drawY  = Math.round(py + PLH - drawH);
+    ctx.drawImage(img, PLX, drawY, PLW, drawH);
+    ctx.restore();
+    return;
+  }
+
+  // 픽셀 아트 폴백 캐릭터
+  const legFrame = Math.floor(frame / 8) % 2;
+  const color    = isStep2 ? "#4488ff" : "#ff88aa";
+  const skinColor = "#ffcc88";
+
+  // 몸통
+  dot(ctx, PLX + 4, py + 4,  color,     6, 8);
+  // 머리
+  dot(ctx, PLX + 4, py,      skinColor, 6, 4);
+  dot(ctx, PLX + 3, py + 1,  skinColor, 8, 3);
+  // 눈
+  dot(ctx, PLX + 5, py + 1,  PAL.black, 1, 1);
+  dot(ctx, PLX + 8, py + 1,  PAL.black, 1, 1);
+  // 다리 (애니메이션)
+  if (legFrame === 0) {
+    dot(ctx, PLX + 4, py + 12, color, 2, 4);
+    dot(ctx, PLX + 8, py + 14, color, 2, 2);
+  } else {
+    dot(ctx, PLX + 4, py + 14, color, 2, 2);
+    dot(ctx, PLX + 8, py + 12, color, 2, 4);
+  }
+  // 팔
+  dot(ctx, PLX + 2, py + 5,  color, 2, 3);
+  dot(ctx, PLX + 10, py + 5, color, 2, 3);
+}
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────────
 function formatDist(n: number): string {
@@ -119,7 +340,7 @@ function loadImg(src: string): Promise<HTMLImageElement | null> {
 function isColliding(
   px: number, py: number, pw: number, ph: number,
   sx: number, sy: number, sw: number, sh: number,
-  margin = 10
+  margin = 2
 ): boolean {
   return (
     px + margin < sx + sw - margin &&
@@ -129,30 +350,11 @@ function isColliding(
   );
 }
 
-// ─── 캔버스 렌더 헬퍼 ────────────────────────────────────────────────────────
-function drawRoundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
 // ─── 메인 컴포넌트 ───────────────────────────────────────────────────────────
 export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef    = useRef<number>(0);
 
-  // ── 게임 상태 ref (루프 내 직접 참조) ──
   const statusRef      = useRef<GameStatus>("idle");
   const stepRef        = useRef<1 | 2>(1);
   const scoreRef       = useRef(0);
@@ -163,47 +365,32 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   const spritesRef     = useRef<Sprite[]>([]);
   const spriteIdRef    = useRef(0);
   const groundOffRef   = useRef(0);
-  const starOffRef     = useRef(0);
+  const cloudOffRef    = useRef(0);
   const hillOffRef     = useRef(0);
 
-  // 플레이어 물리
-  const playerYRef  = useRef(GROUND_Y - PLAYER_H);
+  const playerYRef  = useRef(GY - PLH);
   const playerVYRef = useRef(0);
   const groundedRef = useRef(true);
 
-  // 이미지 캐시
-  const imgsRef = useRef<Record<string, HTMLImageElement | null>>({});
-
-  // 이펙트
+  const imgsRef     = useRef<Record<string, HTMLImageElement | null>>({});
   const effectsRef  = useRef<FloatEffect[]>([]);
   const effectIdRef = useRef(0);
 
-  // 별 위치 (고정 시드)
-  const starsRef = useRef<{ x: number; y: number; r: number; twinkle: number }[]>([]);
-  useEffect(() => {
-    starsRef.current = Array.from({ length: 28 }, () => ({
-      x: Math.random() * CANVAS_W,
-      y: Math.random() * (GROUND_Y - 30),
-      r: 0.6 + Math.random() * 1.2,
-      twinkle: Math.random() * Math.PI * 2,
-    }));
-  }, []);
-
-  // ── React 상태 (UI 렌더링용) ──
+  // React 상태
   const [status,  setStatus]  = useState<GameStatus>("idle");
   const [step,    setStep]    = useState<1 | 2>(1);
   const [score,   setScore]   = useState(0);
   const [lives,   setLives]   = useState(MAX_LIVES);
   const [started, setStarted] = useState(false);
 
-  // ── 이미지 사전 로드 ──
+  // 이미지 로드
   useEffect(() => {
     [IMG_YEONGSEO, IMG_JINSEONG, IMG_OBSTACLE, IMG_GEL].forEach(async (src) => {
       imgsRef.current[src] = await loadImg(src);
     });
   }, []);
 
-  // ── 점프 ──
+  // 점프
   const jump = useCallback(() => {
     if (!groundedRef.current || statusRef.current !== "playing") return;
     playerVYRef.current = JUMP_VY;
@@ -218,7 +405,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [jump]);
 
-  // ── 무적 트리거 ──
+  // 무적
   const triggerInvincible = useCallback(() => {
     invincibleRef.current = true;
     if (invTimerRef.current) clearTimeout(invTimerRef.current);
@@ -233,8 +420,9 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    ctx.imageSmoothingEnabled = false;
+
     const cfg    = STEP_CONFIG[stepRef.current];
-    const pal    = stepRef.current === 1 ? PALETTE_S1 : PALETTE_S2;
     const target = stepRef.current === 1 ? STEP1_TARGET : STEP2_TARGET;
     frameRef.current++;
     const fc = frameRef.current;
@@ -253,40 +441,41 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     if (!groundedRef.current) {
       playerVYRef.current = Math.min(playerVYRef.current + GRAVITY, MAX_FALL);
       playerYRef.current += playerVYRef.current;
-      if (playerYRef.current >= GROUND_Y - PLAYER_H) {
-        playerYRef.current = GROUND_Y - PLAYER_H;
+      if (playerYRef.current >= GY - PLH) {
+        playerYRef.current = GY - PLH;
         playerVYRef.current = 0;
         groundedRef.current = true;
       }
     }
 
-    // 3) 스크롤 오프셋
-    groundOffRef.current = (groundOffRef.current + cfg.scrollSpeed) % 48;
-    starOffRef.current   = (starOffRef.current   + 0.08)            % CANVAS_W;
-    hillOffRef.current   = (hillOffRef.current   + cfg.scrollSpeed * 0.25) % 120;
+    // 3) 스크롤
+    groundOffRef.current = (groundOffRef.current + cfg.scrollSpeed);
+    cloudOffRef.current  = (cloudOffRef.current  + cfg.scrollSpeed * 0.15);
+    hillOffRef.current   = (hillOffRef.current   + cfg.scrollSpeed * 0.35);
 
     // 4) 스프라이트 이동
     spritesRef.current = spritesRef.current
       .map((s) => ({ ...s, x: s.x - cfg.scrollSpeed }))
-      .filter((s) => s.x > -SPRITE_W - 20);
+      .filter((s) => s.x > -OBW - 4);
 
     // 5) 스프라이트 생성
     if (fc % cfg.spawnInterval === 0) {
       spritesRef.current.push({
         id: spriteIdRef.current++,
-        x: CANVAS_W + 20,
+        x: CW + 4,
         type: Math.random() < cfg.itemChance ? "item" : "obstacle",
       });
     }
 
     // 6) 충돌
     const py = playerYRef.current;
-    const collSpriteY = GROUND_Y - SPRITE_H;
     for (let i = spritesRef.current.length - 1; i >= 0; i--) {
       const s = spritesRef.current[i];
-      if (s.x > CANVAS_W) continue;
+      if (s.x > CW) continue;
+
       if (s.type === "obstacle") {
-        if (!invincibleRef.current && isColliding(PLAYER_X, py, PLAYER_W, PLAYER_H, s.x, collSpriteY, SPRITE_W, SPRITE_H)) {
+        const oy = GY - OBH;
+        if (!invincibleRef.current && isColliding(PLX, py, PLW, PLH, s.x, oy, OBW, OBH)) {
           livesRef.current--;
           setLives(livesRef.current);
           spritesRef.current.splice(i, 1);
@@ -299,208 +488,56 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
           }
         }
       } else {
-        if (isColliding(PLAYER_X, py, PLAYER_W, PLAYER_H, s.x, collSpriteY, SPRITE_W, SPRITE_H, 6)) {
+        const iy = GY - ITH - 2;
+        if (isColliding(PLX, py, PLW, PLH, s.x, iy, ITW, ITH, 1)) {
           scoreRef.current = Math.min(scoreRef.current + GEL_BONUS, target);
           spritesRef.current.splice(i, 1);
           effectsRef.current.push({
             id: effectIdRef.current++,
-            text: "에너지업! ⚡",
-            x: PLAYER_X + PLAYER_W / 2,
-            y: py - 8,
-            life: 55,
-            color: "#ffd700",
+            text: "+0.5km!",
+            x: PLX + PLW / 2,
+            y: py - 2,
+            life: 40,
           });
         }
       }
     }
 
-    // 7) 이펙트 업데이트
+    // 7) 이펙트
     effectsRef.current = effectsRef.current
-      .map((e) => ({ ...e, y: e.y - 0.9, life: e.life - 1 }))
+      .map((e) => ({ ...e, y: e.y - 0.3, life: e.life - 1 }))
       .filter((e) => e.life > 0);
 
     // ── 8) 렌더링 ──────────────────────────────────────────────────────────
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.clearRect(0, 0, CW, CH);
 
-    // 하늘 그라디언트
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-    skyGrad.addColorStop(0, pal.skyTop);
-    skyGrad.addColorStop(1, pal.skyBot);
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, CANVAS_W, GROUND_Y);
+    // 배경
+    drawSky(ctx, cloudOffRef.current);
+    drawHills(ctx, hillOffRef.current);
+    drawTeaField(ctx, groundOffRef.current);
 
-    // 별
-    const t = fc * 0.04;
-    for (const star of starsRef.current) {
-      const alpha = 0.45 + 0.55 * Math.sin(star.twinkle + t);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = pal.starColor;
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // 달 (우측 상단)
-    const moonX = CANVAS_W - 56;
-    const moonY = 28;
-    const moonGrad = ctx.createRadialGradient(moonX, moonY, 2, moonX, moonY, 18);
-    moonGrad.addColorStop(0, pal.moonColor);
-    moonGrad.addColorStop(0.7, pal.moonColor + "cc");
-    moonGrad.addColorStop(1, pal.moonColor + "00");
-    ctx.fillStyle = moonGrad;
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, 18, 0, Math.PI * 2);
-    ctx.fill();
-    // 달 글로우
-    ctx.shadowColor = pal.moonColor;
-    ctx.shadowBlur  = 18;
-    ctx.fillStyle   = pal.moonColor + "66";
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, 22, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // 원거리 언덕 (느리게)
-    ctx.fillStyle = pal.hillFar;
-    for (let hx = -(hillOffRef.current % 120); hx < CANVAS_W + 120; hx += 120) {
-      ctx.beginPath();
-      ctx.moveTo(hx, GROUND_Y);
-      ctx.bezierCurveTo(hx + 30, GROUND_Y - 55, hx + 90, GROUND_Y - 55, hx + 120, GROUND_Y);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // 중거리 언덕
-    ctx.fillStyle = pal.hillMid;
-    const hillOff2 = (hillOffRef.current * 1.6) % 80;
-    for (let hx = -(hillOff2); hx < CANVAS_W + 80; hx += 80) {
-      ctx.beginPath();
-      ctx.moveTo(hx, GROUND_Y);
-      ctx.bezierCurveTo(hx + 20, GROUND_Y - 32, hx + 60, GROUND_Y - 32, hx + 80, GROUND_Y);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // 바닥
-    const groundGrad = ctx.createLinearGradient(0, GROUND_Y, 0, CANVAS_H);
-    groundGrad.addColorStop(0, pal.ground);
-    groundGrad.addColorStop(1, pal.skyTop);
-    ctx.fillStyle = groundGrad;
-    ctx.fillRect(0, GROUND_Y, CANVAS_W, CANVAS_H - GROUND_Y);
-
-    // 바닥 경계 글로우 라인
-    ctx.strokeStyle = stepRef.current === 1
-      ? "rgba(80,200,100,0.35)"
-      : "rgba(160,120,255,0.35)";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = stepRef.current === 1 ? "#50c864" : "#a078ff";
-    ctx.shadowBlur  = 8;
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND_Y);
-    ctx.lineTo(CANVAS_W, GROUND_Y);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // 바닥 줄무늬 (스크롤)
-    ctx.fillStyle = pal.groundStr;
-    const strOff = groundOffRef.current % 48;
-    for (let lx = -strOff; lx < CANVAS_W; lx += 48) {
-      ctx.fillRect(lx, GROUND_Y + 1, 24, CANVAS_H - GROUND_Y - 1);
-    }
-
-    // 경로 점선 (마라톤 코스)
-    ctx.setLineDash([10, 14]);
-    ctx.strokeStyle = pal.pathLine;
-    ctx.lineWidth   = 1.5;
-    ctx.shadowBlur  = 0;
-    const dashOff = groundOffRef.current % 24;
-    ctx.lineDashOffset = -dashOff;
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND_Y + 10);
-    ctx.lineTo(CANVAS_W, GROUND_Y + 10);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.lineDashOffset = 0;
-
-    // ── 스프라이트 ──
-    const spriteY = GROUND_Y - SPRITE_H;
+    // 스프라이트
     for (const s of spritesRef.current) {
       if (s.type === "obstacle") {
-        const obsImg = imgsRef.current[IMG_OBSTACLE];
-        if (obsImg) {
-          ctx.drawImage(obsImg, s.x, spriteY, SPRITE_W, SPRITE_H);
-        } else {
-          // 폴백: 글로우 덤불
-          ctx.shadowColor = "#50c864";
-          ctx.shadowBlur  = 10;
-          ctx.fillStyle = "#1e5c1e";
-          ctx.beginPath();
-          ctx.arc(s.x + SPRITE_W * 0.5, spriteY + SPRITE_H * 0.58, SPRITE_W * 0.38, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#2d8a3a";
-          ctx.beginPath();
-          ctx.arc(s.x + SPRITE_W * 0.28, spriteY + SPRITE_H * 0.68, SPRITE_W * 0.28, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(s.x + SPRITE_W * 0.72, spriteY + SPRITE_H * 0.68, SPRITE_W * 0.28, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
+        drawObstacle(ctx, Math.round(s.x), imgsRef.current[IMG_OBSTACLE]);
       } else {
-        const gelImg = imgsRef.current[IMG_GEL];
-        if (gelImg) {
-          ctx.drawImage(gelImg, s.x + 4, spriteY + 4, SPRITE_W - 8, SPRITE_H - 8);
-        } else {
-          // 폴백: 골드 캡슐
-          ctx.shadowColor = "#ffd700";
-          ctx.shadowBlur  = 14;
-          const gelGrad = ctx.createLinearGradient(s.x + 8, spriteY + 8, s.x + SPRITE_W - 8, spriteY + SPRITE_H - 8);
-          gelGrad.addColorStop(0, "#ffe066");
-          gelGrad.addColorStop(1, "#ff9900");
-          ctx.fillStyle = gelGrad;
-          drawRoundRect(ctx, s.x + 8, spriteY + 10, SPRITE_W - 16, SPRITE_H - 20, 7);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          ctx.fillStyle  = "rgba(0,0,0,0.55)";
-          ctx.font       = "bold 15px sans-serif";
-          ctx.textAlign  = "center";
-          ctx.fillText("⚡", s.x + SPRITE_W / 2, spriteY + SPRITE_H / 2 + 5);
-        }
+        drawGel(ctx, Math.round(s.x), imgsRef.current[IMG_GEL], fc);
       }
     }
 
-    // ── 플레이어 ──
-    const blinkOn = invincibleRef.current && Math.floor(fc / 5) % 2 === 0;
+    // 플레이어
+    const blinkOn = invincibleRef.current && Math.floor(fc / 4) % 2 === 0;
     if (!blinkOn) {
       const playerImg = imgsRef.current[stepRef.current === 1 ? IMG_YEONGSEO : IMG_JINSEONG];
-      if (playerImg) {
-        // 착지 시 그림자
-        if (groundedRef.current) {
-          ctx.fillStyle = "rgba(0,0,0,0.22)";
-          ctx.beginPath();
-          ctx.ellipse(PLAYER_X + PLAYER_W / 2, GROUND_Y + 4, PLAYER_W * 0.38, 5, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.drawImage(playerImg, PLAYER_X, playerYRef.current, PLAYER_W, PLAYER_H);
-      } else {
-        ctx.font      = `${PLAYER_H * 0.82}px sans-serif`;
-        ctx.textAlign = "left";
-        ctx.fillText(stepRef.current === 1 ? "🏃‍♀️" : "🏃", PLAYER_X, playerYRef.current + PLAYER_H - 4);
-      }
+      drawPlayer(ctx, Math.round(playerYRef.current), playerImg, fc, stepRef.current === 2, groundedRef.current);
     }
 
-    // ── 이펙트 텍스트 ──
+    // 이펙트 텍스트
     for (const ef of effectsRef.current) {
-      const alpha = Math.min(1, ef.life / 25);
+      const alpha = ef.life / 40;
       ctx.globalAlpha = alpha;
-      ctx.shadowColor = ef.color;
-      ctx.shadowBlur  = 10;
-      ctx.fillStyle   = ef.color;
-      ctx.font        = "bold 13px 'Gowun Dodum', sans-serif";
-      ctx.textAlign   = "center";
-      ctx.fillText(ef.text, ef.x, ef.y);
+      pixelText(ctx, ef.text, Math.round(ef.x), Math.round(ef.y), PAL.uiGold, 4, "center");
       ctx.globalAlpha = 1;
-      ctx.shadowBlur  = 0;
     }
 
     // UI 업데이트
@@ -509,24 +546,25 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     rafRef.current = requestAnimationFrame(gameLoop);
   }, [triggerInvincible]);
 
-  // ── 게임 시작 / 리셋 ──
+  // ── 게임 시작 ──
   const startGame = useCallback((targetStep: 1 | 2) => {
     cancelAnimationFrame(rafRef.current);
     if (invTimerRef.current) clearTimeout(invTimerRef.current);
 
-    stepRef.current     = targetStep;
-    statusRef.current   = "playing";
-    scoreRef.current    = 0;
-    livesRef.current    = MAX_LIVES;
+    stepRef.current      = targetStep;
+    statusRef.current    = "playing";
+    scoreRef.current     = 0;
+    livesRef.current     = MAX_LIVES;
     invincibleRef.current = false;
-    frameRef.current    = 0;
-    spritesRef.current  = [];
+    frameRef.current     = 0;
+    spritesRef.current   = [];
     groundOffRef.current = 0;
-    hillOffRef.current  = 0;
-    playerYRef.current  = GROUND_Y - PLAYER_H;
-    playerVYRef.current = 0;
-    groundedRef.current = true;
-    effectsRef.current  = [];
+    cloudOffRef.current  = 0;
+    hillOffRef.current   = 0;
+    playerYRef.current   = GY - PLH;
+    playerVYRef.current  = 0;
+    groundedRef.current  = true;
+    effectsRef.current   = [];
 
     setStep(targetStep);
     setStatus("playing");
@@ -550,108 +588,172 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   const target    = step === 1 ? STEP1_TARGET : STEP2_TARGET;
   const pct       = Math.min(100, Math.round((score / target) * 100));
 
+  // 픽셀 아트 UI 공통 스타일
+  const pixelFont: React.CSSProperties = {
+    fontFamily: "'Press Start 2P', 'Courier New', monospace",
+    imageRendering: "pixelated",
+  };
+
   return (
     <GameLayout
       stage={stage}
       score={score}
       maxScore={target}
-      hintText="스페이스바·클릭·터치로 점프! 장애물을 피하고 에너지 겔을 먹어 거리를 늘려봐 🏃"
+      hintText="스페이스바·클릭·터치로 점프! 장애물 피하고 에너지 겔 먹기 🍵"
       showProgress={false}
     >
-      <div className="flex-1 flex flex-col items-center px-3 py-2 gap-3">
+      {/* 픽셀 폰트 로드 */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-        {/* 안내 배너 */}
-        <div
-          style={{
-            fontFamily: "'Gowun Dodum', sans-serif",
-            fontSize: "0.80rem",
-            color: "oklch(0.85 0.10 145)",
-            textAlign: "center",
-            padding: "5px 16px",
-            background: "oklch(0.16 0.06 145 / 0.55)",
-            borderRadius: 999,
-            border: "1px solid oklch(0.50 0.12 145 / 0.35)",
-            letterSpacing: "0.01em",
-          }}
-        >
-          영서는 10km, 진성이는 42km! 열심히 뛰어보자~
-        </div>
+        @keyframes s11-blink {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+        @keyframes s11-popup {
+          0%   { transform: scale(0.5) translateY(8px); opacity: 0; }
+          60%  { transform: scale(1.06) translateY(-2px); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        @keyframes s11-scanline {
+          0%   { background-position: 0 0; }
+          100% { background-position: 0 4px; }
+        }
+        .s11-canvas-wrap {
+          image-rendering: pixelated;
+          image-rendering: crisp-edges;
+        }
+        .s11-canvas-wrap canvas {
+          image-rendering: pixelated;
+          image-rendering: crisp-edges;
+        }
+        .s11-pixel-border {
+          box-shadow:
+            0 0 0 2px #1a2e0a,
+            0 0 0 4px #5aaa3a,
+            0 0 0 6px #1a2e0a,
+            0 0 0 8px #3a7a22;
+        }
+        .s11-scanline::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.08) 2px,
+            rgba(0,0,0,0.08) 4px
+          );
+          pointer-events: none;
+          animation: s11-scanline 0.2s linear infinite;
+        }
+      `}</style>
+
+      <div className="flex-1 flex flex-col items-center px-3 py-2 gap-3">
 
         {/* ── 시작 화면 ── */}
         {!started && (
           <div className="flex-1 flex flex-col items-center justify-center w-full">
-            <div className="card-glow p-7 text-center max-w-sm w-full">
-              {/* 캐릭터 미리보기 */}
-              <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 12 }}>
-                {[IMG_YEONGSEO, IMG_JINSEONG].map((src, i) => (
+            <div
+              style={{
+                background: "#0a1a04",
+                border: "none",
+                borderRadius: 0,
+                padding: "24px 20px",
+                maxWidth: 340,
+                width: "100%",
+                ...pixelFont,
+              }}
+              className="s11-pixel-border"
+            >
+              {/* 타이틀 */}
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: "0.65rem", color: PAL.uiGold, marginBottom: 6, letterSpacing: "0.05em" }}>
+                  ★ STAGE 11 ★
+                </div>
+                <div style={{ fontSize: "0.72rem", color: PAL.uiText, lineHeight: 1.8 }}>
+                  보성 녹차마라톤
+                </div>
+                <div style={{ fontSize: "0.55rem", color: PAL.tea4, marginTop: 4 }}>
+                  BOSEONG GREEN TEA MARATHON
+                </div>
+              </div>
+
+              {/* 픽셀 구분선 */}
+              <div style={{ height: 2, background: PAL.uiBorder, marginBottom: 14 }} />
+
+              {/* 거리 정보 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                {[
+                  { icon: "♀", name: "영서", dist: "10.000 km", color: PAL.uiPink },
+                  { icon: "♂", name: "진성", dist: "42.195 km", color: "#88aaff" },
+                ].map((p) => (
                   <div
-                    key={i}
+                    key={p.name}
                     style={{
-                      width: 64, height: 72,
-                      borderRadius: 14,
-                      background: "oklch(0.20 0.06 280 / 0.7)",
-                      border: `1.5px solid ${i === 0 ? "oklch(0.72 0.12 350 / 0.6)" : "oklch(0.78 0.14 55 / 0.6)"}`,
-                      overflow: "hidden",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: `0 0 16px ${i === 0 ? "oklch(0.72 0.12 350 / 0.3)" : "oklch(0.78 0.14 55 / 0.3)"}`,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      background: "#162a08",
+                      padding: "5px 8px",
+                      border: `1px solid ${p.color}44`,
                     }}
                   >
-                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <span style={{ fontSize: "0.65rem", color: p.color }}>{p.icon}</span>
+                    <span style={{ fontSize: "0.52rem", color: PAL.uiText, flex: 1 }}>{p.name}</span>
+                    <span style={{ fontSize: "0.55rem", color: p.color }}>{p.dist}</span>
                   </div>
                 ))}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "5px 8px",
+                    background: "#1e3a0c",
+                    border: `1px solid ${PAL.uiGold}44`,
+                  }}
+                >
+                  <span style={{ fontSize: "0.52rem", color: PAL.uiGold }}>TOTAL</span>
+                  <span style={{ fontSize: "0.55rem", color: PAL.uiGold }}>52.195 km</span>
+                </div>
               </div>
 
-              <h2
+              {/* 조작 안내 */}
+              <div
                 style={{
-                  color: "oklch(0.88 0.12 55)",
-                  fontFamily: "'Gowun Dodum', sans-serif",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  marginBottom: 8,
+                  fontSize: "0.48rem",
+                  color: PAL.tea4,
+                  lineHeight: 2,
+                  marginBottom: 16,
+                  textAlign: "center",
+                  letterSpacing: "0.02em",
                 }}
               >
-                보성 녹차마라톤 🍵
-              </h2>
-
-              {/* 거리 배지 */}
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 14 }}>
-                {[
-                  { label: "영서", dist: "10 km", color: "oklch(0.72 0.12 350)" },
-                  { label: "+", dist: "",         color: "oklch(0.65 0.05 280)" },
-                  { label: "진성", dist: "42.195 km", color: "oklch(0.78 0.14 55)" },
-                  { label: "=", dist: "",         color: "oklch(0.65 0.05 280)" },
-                  { label: "합계", dist: "52.195 km", color: "oklch(0.75 0.15 300)" },
-                ].map((item, i) =>
-                  item.dist ? (
-                    <div key={i} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "0.68rem", color: item.color, fontFamily: "'Gowun Dodum', sans-serif" }}>{item.label}</div>
-                      <div style={{ fontSize: "0.82rem", fontWeight: "bold", color: item.color, fontFamily: "'Gowun Dodum', sans-serif" }}>{item.dist}</div>
-                    </div>
-                  ) : (
-                    <div key={i} style={{ color: item.color, fontSize: "1.1rem", alignSelf: "center", paddingBottom: 2 }}>{item.label}</div>
-                  )
-                )}
+                [SPACE] / CLICK / TOUCH → JUMP<br />
+                AVOID BUSHES · COLLECT GEL ⚡
               </div>
 
-              <p
-                style={{
-                  color: "oklch(0.72 0.05 280)",
-                  fontFamily: "'Gowun Dodum', sans-serif",
-                  fontSize: "0.78rem",
-                  marginBottom: 20,
-                  lineHeight: 1.6,
-                }}
-              >
-                스페이스바 · 클릭 · 터치로 점프<br />
-                장애물 피하고 에너지 겔 먹기!
-              </p>
-
+              {/* 시작 버튼 */}
               <button
-                className="btn-star"
-                style={{ width: "100%" }}
                 onClick={() => { setStarted(true); startGame(1); }}
+                style={{
+                  width: "100%",
+                  background: PAL.uiBorder,
+                  color: "#0a1a04",
+                  border: "none",
+                  padding: "10px 0",
+                  fontSize: "0.62rem",
+                  cursor: "pointer",
+                  ...pixelFont,
+                  letterSpacing: "0.05em",
+                  boxShadow: `3px 3px 0 ${PAL.hill1}`,
+                  transition: "transform 0.05s, box-shadow 0.05s",
+                }}
+                onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translate(3px,3px)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = ""; (e.currentTarget as HTMLButtonElement).style.boxShadow = `3px 3px 0 ${PAL.hill1}`; }}
               >
-                달리기 시작! 🏃‍♀️
+                ▶ START GAME
               </button>
             </div>
           </div>
@@ -661,79 +763,76 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
         {started && isPlaying && (
           <div className="flex flex-col items-center gap-2 w-full">
 
-            {/* HUD 카드 */}
+            {/* HUD 바 */}
             <div
               style={{
+                width: "100%",
+                maxWidth: CW * PX,
+                background: "#0a1a04",
+                padding: "6px 10px",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                width: "100%",
-                maxWidth: CANVAS_W,
-                padding: "6px 12px",
-                background: "oklch(0.14 0.05 280 / 0.82)",
-                borderRadius: 12,
-                border: "1px solid oklch(0.30 0.06 280 / 0.7)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+                ...pixelFont,
               }}
+              className="s11-pixel-border"
             >
-              {/* 스텝 배지 */}
+              {/* 스텝 */}
               <div
                 style={{
+                  fontSize: "0.42rem",
+                  color: step === 1 ? PAL.uiPink : "#88aaff",
+                  background: "#162a08",
+                  padding: "3px 6px",
+                  border: `1px solid ${step === 1 ? PAL.uiPink : "#88aaff"}66`,
                   flexShrink: 0,
-                  fontFamily: "'Gowun Dodum', sans-serif",
-                  fontSize: "0.72rem",
-                  fontWeight: "bold",
-                  color: step === 1 ? "oklch(0.85 0.12 350)" : "oklch(0.85 0.12 55)",
-                  background: step === 1 ? "oklch(0.22 0.07 350 / 0.65)" : "oklch(0.22 0.07 55 / 0.65)",
-                  padding: "3px 9px",
-                  borderRadius: 8,
-                  border: `1px solid ${step === 1 ? "oklch(0.55 0.14 350 / 0.5)" : "oklch(0.55 0.14 55 / 0.5)"}`,
-                  boxShadow: `0 0 10px ${step === 1 ? "oklch(0.72 0.12 350 / 0.3)" : "oklch(0.78 0.14 55 / 0.3)"}`,
+                  letterSpacing: "0.03em",
                 }}
               >
-                {step === 1 ? "Step 1 · 영서 🏃‍♀️" : "Step 2 · 진성 🏃"}
+                {step === 1 ? "P1:영서" : "P2:진성"}
               </div>
 
-              {/* 거리 + 프로그레스 바 */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                  <span style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "0.78rem", fontWeight: "bold", color: "oklch(0.88 0.10 145)" }}>
-                    {formatDist(score)}
-                  </span>
-                  <span style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "0.70rem", color: "oklch(0.60 0.05 280)" }}>
-                    / {formatDist(target)}
-                  </span>
-                </div>
-                <div style={{ height: 5, borderRadius: 999, background: "oklch(0.22 0.04 280)" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      borderRadius: 999,
-                      width: `${pct}%`,
-                      background: step === 1
-                        ? "linear-gradient(90deg, oklch(0.65 0.18 145), oklch(0.78 0.14 55))"
-                        : "linear-gradient(90deg, oklch(0.65 0.18 300), oklch(0.78 0.14 55))",
-                      transition: "width 200ms ease",
-                      boxShadow: "0 0 8px oklch(0.78 0.14 55 / 0.5)",
-                    }}
-                  />
-                </div>
+              {/* 거리 */}
+              <div style={{ fontSize: "0.48rem", color: PAL.uiGold, flexShrink: 0 }}>
+                {formatDist(score)}
               </div>
 
-              {/* 목숨 하트 */}
+              {/* 프로그레스 바 (픽셀 스타일) */}
+              <div
+                style={{
+                  flex: 1,
+                  height: 6,
+                  background: "#162a08",
+                  border: `1px solid ${PAL.uiBorder}66`,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0, top: 0, bottom: 0,
+                    width: `${pct}%`,
+                    background: step === 1
+                      ? `repeating-linear-gradient(90deg, ${PAL.tea3} 0 4px, ${PAL.tea4} 4px 8px)`
+                      : `repeating-linear-gradient(90deg, #6688ff 0 4px, #88aaff 4px 8px)`,
+                    transition: "width 200ms steps(20)",
+                  }}
+                />
+              </div>
+
+              {/* 목숨 하트 (픽셀) */}
               <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
                 {Array.from({ length: MAX_LIVES }, (_, i) => (
                   <span
                     key={i}
                     style={{
-                      fontSize: "1.05rem",
-                      opacity: i < lives ? 1 : 0.18,
-                      filter: i < lives ? "drop-shadow(0 0 4px #ff6b8a)" : "grayscale(1)",
-                      transition: "all 0.3s ease",
+                      fontSize: "0.7rem",
+                      opacity: i < lives ? 1 : 0.2,
+                      filter: i < lives ? "none" : "grayscale(1)",
                     }}
                   >
-                    ❤️
+                    ♥
                   </span>
                 ))}
               </div>
@@ -741,14 +840,11 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
 
             {/* 캔버스 래퍼 */}
             <div
+              className="s11-canvas-wrap s11-scanline"
               style={{
                 position: "relative",
                 width: "100%",
-                maxWidth: CANVAS_W,
-                borderRadius: 16,
-                overflow: "hidden",
-                border: "2px solid oklch(0.35 0.08 280 / 0.7)",
-                boxShadow: "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px oklch(0.78 0.14 55 / 0.12), inset 0 1px 0 oklch(1 0 0 / 8%)",
+                maxWidth: CW * PX,
                 cursor: "pointer",
                 touchAction: "none",
               }}
@@ -757,9 +853,15 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
             >
               <canvas
                 ref={canvasRef}
-                width={CANVAS_W}
-                height={CANVAS_H}
-                style={{ display: "block", width: "100%", height: "auto" }}
+                width={CW}
+                height={CH}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  imageRendering: "pixelated",
+                }}
+                className="s11-pixel-border"
               />
 
               {/* ── Step 1 클리어 팝업 ── */}
@@ -768,44 +870,41 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                   style={{
                     position: "absolute", inset: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "oklch(0.05 0.02 280 / 0.72)",
-                    backdropFilter: "blur(6px)",
+                    background: "rgba(0,0,0,0.65)",
                   }}
                 >
                   <div
                     style={{
-                      background: "oklch(0.16 0.05 280 / 0.97)",
-                      border: "2px solid oklch(0.72 0.12 350 / 0.65)",
-                      borderRadius: 20,
-                      padding: "24px 28px",
+                      background: "#0a1a04",
+                      padding: "16px 20px",
                       textAlign: "center",
-                      maxWidth: 300,
-                      animation: "s11PopIn 0.38s cubic-bezier(0.34,1.56,0.64,1)",
-                      boxShadow: "0 16px 48px rgba(0,0,0,0.55), 0 0 32px oklch(0.72 0.12 350 / 0.25)",
+                      animation: "s11-popup 0.35s ease-out forwards",
+                      ...pixelFont,
                     }}
+                    className="s11-pixel-border"
                   >
-                    <div style={{ fontSize: "2.4rem", marginBottom: 6 }}>🎉</div>
-                    <p
+                    <div style={{ fontSize: "0.55rem", color: PAL.uiGold, marginBottom: 8, letterSpacing: "0.05em" }}>
+                      ★ STEP 1 CLEAR ★
+                    </div>
+                    <div style={{ fontSize: "0.48rem", color: PAL.uiText, lineHeight: 2, marginBottom: 12 }}>
+                      영서 10km 완주!<br />
+                      <span style={{ color: PAL.uiPink }}>진성이에게 바통 터치!</span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleStep2Start(); }}
                       style={{
-                        color: "oklch(0.92 0.08 60)",
-                        fontFamily: "'Gowun Dodum', sans-serif",
-                        fontSize: "1rem",
-                        fontWeight: "bold",
-                        lineHeight: 1.65,
-                        marginBottom: 18,
+                        background: PAL.uiBorder,
+                        color: "#0a1a04",
+                        border: "none",
+                        padding: "8px 16px",
+                        fontSize: "0.45rem",
+                        cursor: "pointer",
+                        ...pixelFont,
+                        boxShadow: `2px 2px 0 ${PAL.hill1}`,
+                        letterSpacing: "0.03em",
                       }}
                     >
-                      영서 10km 완주 성공!<br />
-                      <span style={{ color: "oklch(0.78 0.12 350)", fontSize: "0.88rem" }}>
-                        진성이에게 바통 터치 🏃‍♂️💨
-                      </span>
-                    </p>
-                    <button
-                      className="btn-star"
-                      style={{ width: "100%", fontSize: "0.88rem", padding: "0.6rem 1.5rem" }}
-                      onClick={(e) => { e.stopPropagation(); handleStep2Start(); }}
-                    >
-                      진성이 달리기 시작 →
+                      ▶ 진성이 달리기 시작
                     </button>
                   </div>
                 </div>
@@ -817,50 +916,41 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                   style={{
                     position: "absolute", inset: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "oklch(0.05 0.02 280 / 0.75)",
-                    backdropFilter: "blur(6px)",
+                    background: "rgba(0,0,0,0.70)",
                   }}
                 >
                   <div
                     style={{
-                      background: "oklch(0.16 0.05 280 / 0.97)",
-                      border: "2px solid oklch(0.65 0.22 20 / 0.65)",
-                      borderRadius: 20,
-                      padding: "22px 26px",
+                      background: "#0a1a04",
+                      padding: "14px 18px",
                       textAlign: "center",
-                      maxWidth: 280,
-                      animation: "s11PopIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-                      boxShadow: "0 14px 44px rgba(0,0,0,0.55), 0 0 28px oklch(0.65 0.22 20 / 0.2)",
+                      animation: "s11-popup 0.35s ease-out forwards",
+                      ...pixelFont,
                     }}
+                    className="s11-pixel-border"
                   >
-                    <div style={{ fontSize: "2rem", marginBottom: 6 }}>😵</div>
-                    <p
-                      style={{
-                        color: "oklch(0.90 0.06 60)",
-                        fontFamily: "'Gowun Dodum', sans-serif",
-                        fontSize: "0.98rem",
-                        fontWeight: "bold",
-                        marginBottom: 4,
-                      }}
-                    >
-                      쓰러졌어요!
-                    </p>
-                    <p
-                      style={{
-                        color: "oklch(0.62 0.05 280)",
-                        fontFamily: "'Gowun Dodum', sans-serif",
-                        fontSize: "0.78rem",
-                        marginBottom: 18,
-                      }}
-                    >
-                      {step === 1 ? "영서" : "진성이"}가 {formatDist(score)} 달렸어요
-                    </p>
+                    <div style={{ fontSize: "0.55rem", color: PAL.uiRed, marginBottom: 8, animation: "s11-blink 1s infinite" }}>
+                      GAME OVER
+                    </div>
+                    <div style={{ fontSize: "0.42rem", color: PAL.uiText, lineHeight: 2, marginBottom: 12 }}>
+                      {step === 1 ? "영서" : "진성이"}가<br />
+                      <span style={{ color: PAL.uiGold }}>{formatDist(score)}</span> 달렸어요
+                    </div>
                     <button
-                      className="btn-star"
-                      style={{ width: "100%", fontSize: "0.88rem", padding: "0.6rem 1.5rem" }}
                       onClick={(e) => { e.stopPropagation(); handleRetry(); }}
+                      style={{
+                        background: PAL.uiRed,
+                        color: PAL.white,
+                        border: "none",
+                        padding: "8px 16px",
+                        fontSize: "0.45rem",
+                        cursor: "pointer",
+                        ...pixelFont,
+                        boxShadow: "2px 2px 0 #800000",
+                        letterSpacing: "0.03em",
+                      }}
                     >
-                      🔄 다시 뛰기
+                      ▶ RETRY
                     </button>
                   </div>
                 </div>
@@ -872,51 +962,43 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                   style={{
                     position: "absolute", inset: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "oklch(0.05 0.02 280 / 0.70)",
-                    backdropFilter: "blur(6px)",
+                    background: "rgba(0,0,0,0.65)",
                   }}
                 >
                   <div
                     style={{
-                      background: "oklch(0.16 0.05 280 / 0.97)",
-                      border: "2px solid oklch(0.78 0.14 55 / 0.65)",
-                      borderRadius: 22,
-                      padding: "28px 30px",
+                      background: "#0a1a04",
+                      padding: "18px 22px",
                       textAlign: "center",
-                      maxWidth: 320,
-                      animation: "s11PopIn 0.42s cubic-bezier(0.34,1.56,0.64,1)",
-                      boxShadow: "0 20px 56px rgba(0,0,0,0.6), 0 0 40px oklch(0.78 0.14 55 / 0.25), inset 0 1px 0 oklch(1 0 0 / 10%)",
+                      animation: "s11-popup 0.42s ease-out forwards",
+                      ...pixelFont,
                     }}
+                    className="s11-pixel-border"
                   >
-                    <div style={{ fontSize: "2.6rem", marginBottom: 8 }}>🥇🎊</div>
-                    <p
-                      style={{
-                        color: "oklch(0.92 0.10 55)",
-                        fontFamily: "'Gowun Dodum', sans-serif",
-                        fontSize: "1.05rem",
-                        fontWeight: "bold",
-                        lineHeight: 1.7,
-                        marginBottom: 6,
-                      }}
-                    >
-                      52.195km 완주 성공!
-                    </p>
-                    <p
-                      style={{
-                        color: "oklch(0.78 0.08 350)",
-                        fontFamily: "'Gowun Dodum', sans-serif",
-                        fontSize: "0.88rem",
-                        marginBottom: 20,
-                      }}
-                    >
-                      우리의 첫 마라톤 클리어 🥇
-                    </p>
+                    <div style={{ fontSize: "0.60rem", color: PAL.uiGold, marginBottom: 6, letterSpacing: "0.06em" }}>
+                      ★ MARATHON CLEAR ★
+                    </div>
+                    <div style={{ height: 1, background: PAL.uiBorder, marginBottom: 10 }} />
+                    <div style={{ fontSize: "0.48rem", color: PAL.uiText, lineHeight: 2.2, marginBottom: 14 }}>
+                      52.195km 완주 성공!<br />
+                      <span style={{ color: PAL.uiPink }}>우리의 첫 마라톤 클리어</span><br />
+                      <span style={{ color: PAL.uiGold, fontSize: "0.42rem" }}>🥇 CONGRATULATIONS 🥇</span>
+                    </div>
                     <button
-                      className="btn-star"
-                      style={{ width: "100%", fontSize: "0.92rem" }}
                       onClick={(e) => { e.stopPropagation(); handleFinalClear(); }}
+                      style={{
+                        background: PAL.uiGold,
+                        color: "#0a1a04",
+                        border: "none",
+                        padding: "10px 20px",
+                        fontSize: "0.48rem",
+                        cursor: "pointer",
+                        ...pixelFont,
+                        boxShadow: `3px 3px 0 #a08000`,
+                        letterSpacing: "0.04em",
+                      }}
                     >
-                      다음 기억으로 →
+                      ▶ NEXT STAGE
                     </button>
                   </div>
                 </div>
@@ -925,29 +1007,22 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
 
             {/* 하단 조작 안내 */}
             {status === "playing" && (
-              <p
+              <div
                 style={{
-                  fontFamily: "'Gowun Dodum', sans-serif",
-                  fontSize: "0.70rem",
-                  color: "oklch(0.52 0.05 280)",
+                  ...pixelFont,
+                  fontSize: "0.38rem",
+                  color: PAL.tea4,
                   textAlign: "center",
-                  letterSpacing: "0.01em",
+                  letterSpacing: "0.03em",
+                  opacity: 0.8,
                 }}
               >
-                스페이스바 · 클릭 · 터치로 점프 &nbsp;·&nbsp; 🌿 장애물 피하기 &nbsp;·&nbsp; ⚡ 에너지 겔 먹기
-              </p>
+                [SPACE] / CLICK / TOUCH → JUMP
+              </div>
             )}
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes s11PopIn {
-          0%   { transform: scale(0.72) translateY(10px); opacity: 0; }
-          70%  { transform: scale(1.04) translateY(-2px); opacity: 1; }
-          100% { transform: scale(1)    translateY(0);    opacity: 1; }
-        }
-      `}</style>
     </GameLayout>
   );
 }
