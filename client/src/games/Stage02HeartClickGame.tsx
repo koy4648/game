@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay } from "@/components/GameOverlays";
 
 interface FloatingHeart {
   id: number;
@@ -25,6 +26,7 @@ export default function Stage02HeartClickGame({ stage, onComplete }: Props) {
   const [completed, setCompleted] = useState(false);
   const [failed, setFailed] = useState(false);
   const [started, setStarted] = useState(false);
+  const [showGauge, setShowGauge] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [resultMessage, setResultMessage] = useState("");
   const idRef = useRef(0);
@@ -101,39 +103,49 @@ export default function Stage02HeartClickGame({ stage, onComplete }: Props) {
     >
       <div className="flex-1 flex flex-col items-center px-4 py-2">
         {!started ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-6xl animate-float">💑</div>
-            <div className="card-glow p-6 text-center max-w-sm">
-              <h2 className="text-lg font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                시청 광장에서 고백!
-              </h2>
-              <p className="text-sm mb-4" style={{ color: "oklch(0.90 0.05 60)" }}>
-                25년 3월 3일까지<br />
-                영서와 진성이가 만난 횟수만큼<br />
-                하트를 눌러줘~
-              </p>
-              <button className="btn-star" onClick={() => setStarted(true)}>5초 시작!</button>
-            </div>
-          </div>
+          <GameStartOverlay
+            title="시청 광장에서 고백!"
+            description={<>25년 3월 3일까지<br />영서와 진성이가 만난 횟수만큼<br />하트를 눌러줘~</>}
+            icon="💑"
+            onStart={() => setStarted(true)}
+            buttonText="5초 시작!"
+          />
         ) : (
           <>
-            {/* 진행 바 */}
-            <div className="w-full max-w-md mb-4">
-              <div className="flex justify-between text-xs mb-1" style={{ color: "oklch(0.90 0.05 60)" }}>
-                <span>💕 누른 하트</span>
-                <span>정답: 정확히 {GOAL}번</span>
+            {/* 진행 바 (숨김/표시) */}
+            {showGauge ? (
+              <div className="w-full max-w-md mb-4 animate-slide-down">
+                <div className="flex justify-between text-xs mb-1" style={{ color: "oklch(0.90 0.05 60)" }}>
+                  <span>💕 누른 하트</span>
+                  <span>정답: 7번!</span>
+                </div>
+                <div className="h-4 rounded-full overflow-hidden" style={{ background: "oklch(0.18 0.05 275 / 0.8)" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-200"
+                    style={{
+                      width: `${progress}%`,
+                      background: "linear-gradient(90deg, oklch(0.72 0.12 350), oklch(0.78 0.14 55))",
+                      boxShadow: "0 0 10px oklch(0.72 0.12 350 / 0.6)",
+                    }}
+                  />
+                </div>
               </div>
-              <div className="h-4 rounded-full overflow-hidden" style={{ background: "oklch(0.18 0.05 275 / 0.8)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-200"
-                  style={{
-                    width: `${progress}%`,
-                    background: "linear-gradient(90deg, oklch(0.72 0.12 350), oklch(0.78 0.14 55))",
-                    boxShadow: "0 0 10px oklch(0.72 0.12 350 / 0.6)",
+            ) : (
+              <div className="w-full max-w-md mb-4 flex justify-end min-h-[44px] items-center">
+                <button
+                  onClick={() => setShowGauge(true)}
+                  className="px-3 py-1.5 text-sm font-bold rounded-full transition-all"
+                  style={{ 
+                    background: "oklch(0.18 0.05 275 / 0.6)",
+                    border: "1px solid oklch(0.78 0.14 55 / 0.4)",
+                    color: "oklch(0.85 0.14 55)", 
+                    fontFamily: "'Gowun Dodum', sans-serif" 
                   }}
-                />
+                >
+                  망곰이 도와줘 🐻
+                </button>
               </div>
-            </div>
+            )}
 
             {/* 클릭 영역 */}
             <div
@@ -183,19 +195,6 @@ export default function Stage02HeartClickGame({ stage, onComplete }: Props) {
           </>
         )}
 
-        {completed && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 animate-fade-in">
-            <div className="card-glow p-8 text-center animate-bounce-in max-w-sm">
-              <div className="text-5xl mb-3">💑</div>
-              <h2 className="text-xl font-bold" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                정확히 기억했다! 🎉
-              </h2>
-              <p className="text-sm mt-2" style={{ color: "oklch(0.90 0.05 60)" }}>
-              총 7번 만나고 사귀기로 했지 💕
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </GameLayout>
   );
