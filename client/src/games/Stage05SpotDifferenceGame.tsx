@@ -60,11 +60,11 @@ const STEPS: SpotStep[] = [
     original: "/webdev-static-assets/stage5-step3-1.png",
     modified: "/webdev-static-assets/stage5-step3-2.png",
     answers: [
-      { id: "headband-starfish", x: 586, y: 364, radius: 72, label: "Headband starfish color" },
-      { id: "blue-dolphin", x: 920, y: 575, radius: 82, label: "Blue dolphin plush" },
-      { id: "axolotl-card", x: 927, y: 819, radius: 70, label: "Axolotl postcard" },
-      { id: "watch-band", x: 786, y: 1184, radius: 64, label: "Watch band color" },
-      { id: "pink-penguin", x: 52, y: 1008, radius: 78, label: "Pink penguin keychain" },
+      { id: "headband-starfish", x: 586, y: 364, radius: 120, label: "Headband starfish color" },
+      { id: "blue-dolphin", x: 920, y: 575, radius: 120, label: "Blue dolphin plush" },
+      { id: "axolotl-card", x: 927, y: 819, radius: 150, label: "Axolotl postcard" },
+      { id: "pink-penguin", x: 52, y: 1008, radius: 250, label: "Pink penguin keychain" },
+      { id: "platform-text", x: 151, y: 1408, radius: 300, label: "Platform text" },
     ],
   },
 ];
