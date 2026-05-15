@@ -1,12 +1,12 @@
 /*
- * Stage 11 - 보성 녹차마라톤: 귀여운 파스텔 픽셀 아트 달리기 게임
+ * Stage 11 - 보성 녹차마라톤: 슈퍼마리오 도트 스타일 × 녹차 마을
  *
- * 디자인: 아기자기 파스텔 도트 × 보성 녹차밭
- *   - 파스텔 민트/연두/하늘/핑크 팔레트
- *   - 배경: 하늘 → 구름 → 원거리 산 → 중거리 나무 → 녹차밭 → 꽃밭 → 길
- *   - 장식: 나비, 꽃, 작은 농가, 찻잎 파티클, 무지개
- *   - 캐릭터: 동글동글 귀여운 도트 러너
- *   - HUD: 파스텔 라운드 박스, 별/하트 아이콘
+ * 디자인: 클래식 슈퍼마리오 8비트 × 녹차 테마
+ *   - 배경: 마리오 스타일 파란 하늘, 구름, 녹차 산
+ *   - 지형: 마리오 블록 스타일 플랫폼 + 녹차 색상
+ *   - 장애물: 마리오 월드의 적 (녹차 테마로 재해석)
+ *   - 아이템: 마리오 동전 → 녹차 잎
+ *   - 캐릭터: 마리오 스타일 도트 러너
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
@@ -59,47 +59,31 @@ const IMG_JINSEONG  = "/webdev-static-assets/caricature-run-jinseong.png";
 const IMG_OBSTACLE  = "/webdev-static-assets/obstacle-bush.png";
 const IMG_GEL       = "/webdev-static-assets/item-energy-gel.png";
 
-// ── 파스텔 귀여운 팔레트 ──────────────────────────────────────────────────────
+// ── 슈퍼마리오 × 녹차 팔레트 ──────────────────────────────────────────────────
 const P = {
-  // 하늘
-  skyT:  "#c8eeff",  // 연하늘 상단
-  skyB:  "#e8f8ff",  // 연하늘 하단
+  // 하늘 (마리오 스타일)
+  skyT:  "#4a90e2",  // 진한 파란 상단
+  skyB:  "#87ceeb",  // 밝은 파란 하단
   cloud: "#ffffff",
-  cloudS:"#d8f0ff",  // 구름 그림자
-  // 무지개
-  r1:"#ffb3b3", r2:"#ffd9b3", r3:"#fffbb3",
-  r4:"#b3ffb3", r5:"#b3e8ff", r6:"#d4b3ff",
-  // 원거리 산
-  mtn1:  "#b8ddb0",  // 연한 민트 산
-  mtn2:  "#cceec4",
-  mtn3:  "#ddf5d8",
-  // 중거리 나무
-  tree1: "#5cb85c",  // 나무 진한
-  tree2: "#7dd87d",  // 나무 밝은
-  tree3: "#a8f0a8",  // 나무 연한
-  treeT: "#8b5e3c",  // 나무 기둥
-  // 녹차밭
-  tea1:  "#4caf50",
-  tea2:  "#66bb6a",
-  tea3:  "#81c784",
-  tea4:  "#a5d6a7",
-  tea5:  "#c8e6c9",  // 가장 연한
-  // 꽃
-  fl1:   "#ff8fab",  // 핑크 꽃
-  fl2:   "#ffb3c6",
-  fl3:   "#ffd6e0",
-  fl4:   "#fff0f3",
-  flY:   "#ffe066",  // 노란 꽃
-  flW:   "#ffffff",  // 흰 꽃
-  // 길
-  path:  "#f5e6c8",  // 파스텔 황토
-  pathD: "#e8d4a8",
-  pathL: "#fdf3e0",
-  // 농가
-  roof:  "#ff8a80",  // 파스텔 빨간 지붕
-  wall:  "#fff9c4",  // 파스텔 노란 벽
-  win:   "#b3e5fc",  // 창문
-  door:  "#a5d6a7",  // 문
+  cloudS:"#e0f0ff",
+  // 녹차 산 (마리오 산 스타일)
+  mtn1:  "#2d5016",  // 진한 녹차
+  mtn2:  "#4a7c2c",  // 중간 녹차
+  mtn3:  "#6ba547",  // 밝은 녹차
+  // 블록 (마리오 블록 스타일)
+  block1: "#6ba547", // 녹차 블록
+  block2: "#4a7c2c", // 어두운 녹차
+  block3: "#8bc34a", // 밝은 녹차
+  blockHL:"#a5d6a7", // 블록 하이라이트
+  // 파이프 (마리오 파이프 → 녹차 파이프)
+  pipe:  "#2d5016",
+  pipeHL:"#4a7c2c",
+  // 적 (마리오 Goomba → 녹차 벌레)
+  enemy1: "#8b4513", // 갈색 벌레
+  enemy2: "#a0522d",
+  // 동전 (마리오 동전 → 녹차 잎)
+  coin:  "#ffd700",
+  coinHL:"#ffed4e",
   // UI
   uiBg:  "#f0faf0",
   uiBd:  "#66bb6a",
@@ -112,10 +96,6 @@ const P = {
   white: "#ffffff",
   black: "#333333",
   shadow:"rgba(0,0,0,0.12)",
-  // 나비
-  bt1:   "#ce93d8",  // 보라 나비
-  bt2:   "#f48fb1",  // 핑크 나비
-  bt3:   "#80deea",  // 민트 나비
 };
 
 // ── 도트 헬퍼 ────────────────────────────────────────────────────────────────
@@ -136,202 +116,111 @@ function pixelText(ctx: CanvasRenderingContext2D, text: string, x: number, y: nu
 
 // ── 배경 레이어 드로우 함수들 ─────────────────────────────────────────────────
 
-// 1. 하늘 (파스텔 그라디언트)
+// 1. 하늘 (마리오 스타일 파란 그라디언트)
 function drawSky(ctx: CanvasRenderingContext2D) {
   for (let y = 0; y < GY; y++) {
     const t = y / GY;
-    // 연하늘 → 더 연한 하늘
-    const r = Math.round(200 + t * 32);
-    const g = Math.round(230 + t * 24);
-    const b = Math.round(255);
+    const r = Math.round(74 + t * 20);
+    const g = Math.round(144 + t * 20);
+    const b = Math.round(226);
     ctx.fillStyle = `rgb(${r},${g},${b})`;
     ctx.fillRect(0, y, CW, 1);
   }
 }
 
-// 2. 무지개 (Step1 배경 장식)
-function drawRainbow(ctx: CanvasRenderingContext2D, alpha: number) {
-  if (alpha <= 0) return;
-  ctx.globalAlpha = alpha * 0.35;
-  const cx = CW * 0.72, cy = GY + 4;
-  const colors = [P.r1, P.r2, P.r3, P.r4, P.r5, P.r6];
-  for (let i = 0; i < colors.length; i++) {
-    const r = 28 + i * 5;
-    ctx.strokeStyle = colors[i];
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, Math.PI, 0);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-}
-
-// 3. 구름 (픽셀 도트, 다양한 크기)
+// 2. 마리오 스타일 구름 (눈 달린 구름)
 const CLOUDS = [
-  { ox: 20,  y: 5,  w: 22, h: 7,  speed: 0.12 },
-  { ox: 80,  y: 9,  w: 16, h: 5,  speed: 0.09 },
-  { ox: 140, y: 4,  w: 28, h: 8,  speed: 0.14 },
-  { ox: 200, y: 11, w: 14, h: 4,  speed: 0.10 },
-  { ox: 60,  y: 14, w: 12, h: 4,  speed: 0.08 },
-  { ox: 170, y: 16, w: 18, h: 5,  speed: 0.11 },
+  { ox: 20,  y: 8,  w: 20, h: 6,  speed: 0.12 },
+  { ox: 90,  y: 12, w: 16, h: 5,  speed: 0.09 },
+  { ox: 150, y: 6,  w: 24, h: 7,  speed: 0.14 },
+  { ox: 220, y: 14, w: 14, h: 4,  speed: 0.10 },
 ];
 
 function drawClouds(ctx: CanvasRenderingContext2D, frame: number) {
   for (const cl of CLOUDS) {
     const cx = ((cl.ox + frame * cl.speed) % (CW + cl.w + 10));
     const x  = cx > CW + 5 ? cx - CW - cl.w - 10 : cx;
-    // 구름 도트 패턴 (동글동글)
-    dot(ctx, x,         cl.y + 2, P.cloudS, cl.w,     cl.h - 2);
-    dot(ctx, x,         cl.y + 2, P.cloud,  cl.w,     cl.h - 3);
-    dot(ctx, x + 2,     cl.y,     P.cloud,  cl.w - 4, 3);
-    dot(ctx, x + 3,     cl.y - 1, P.cloud,  cl.w - 6, 2);
-    // 하이라이트
-    dot(ctx, x + 2,     cl.y,     P.white,  3, 1);
+    
+    // 구름 몸통
+    dot(ctx, x + 1, cl.y + 2, P.cloud, cl.w - 2, cl.h - 2);
+    dot(ctx, x,     cl.y + 1, P.cloud, cl.w, cl.h - 1);
+    
+    // 구름 음영
+    dot(ctx, x + 1, cl.y + 2, P.cloudS, cl.w - 2, 1);
+    
+    // 눈 (마리오 스타일)
+    dot(ctx, x + 3, cl.y, P.black, 2, 2);
+    dot(ctx, x + cl.w - 5, cl.y, P.black, 2, 2);
+    dot(ctx, x + 3, cl.y, P.white, 1, 1);
+    dot(ctx, x + cl.w - 5, cl.y, P.white, 1, 1);
   }
 }
 
-// 4. 원거리 산 (파스텔 민트 실루엣)
-const MTN_PROFILE = [0,2,4,6,8,10,12,13,14,14,13,12,10,8,6,4,2,0, 0,1,3,5,7,9,11,12,11,9,7,5,3,1,0, 0,3,6,9,11,12,11,9,6,3,0];
+// 3. 녹차 산 (마리오 산 스타일 - 톱니 모양)
 function drawMountains(ctx: CanvasRenderingContext2D, off: number) {
-  const pw = MTN_PROFILE.length;
+  const mtnY = GY - 22;
+  const pattern = 32;
+  const offset = Math.round(off * 0.18) % pattern;
+  
+  // 산 프로필 (톱니 모양)
   for (let x = 0; x < CW; x++) {
-    const px = ((Math.round(x + off * 0.18)) % pw + pw) % pw;
-    const h  = MTN_PROFILE[px];
-    const topY = GY - 20 - h;
-    dot(ctx, x, topY,      P.mtn1, 1, GY - topY);
-    dot(ctx, x, topY,      P.mtn2, 1, 2);
-    dot(ctx, x, topY + 2,  P.mtn3, 1, 1);
+    const px = (x + offset) % pattern;
+    let h = 0;
+    if (px < 8) h = px;
+    else if (px < 16) h = 16 - px;
+    else if (px < 24) h = px - 16;
+    else h = 32 - px;
+    
+    const topY = mtnY - h;
+    dot(ctx, x, topY, P.mtn1, 1, h);
+    dot(ctx, x, topY, P.mtn2, 1, 1);
   }
 }
 
-// 5. 중거리 나무 (귀여운 동글 나무)
-const TREE_POS = [30, 70, 110, 155, 200, 240];
-function drawTrees(ctx: CanvasRenderingContext2D, off: number) {
-  for (const tx of TREE_POS) {
-    const x = ((tx - Math.round(off * 0.45)) % (CW + 20) + CW + 20) % (CW + 20) - 10;
-    const y = GY - 18;
-    // 기둥
-    dot(ctx, x + 3, y + 10, P.treeT, 3, 8);
-    // 잎 (동글동글 3레이어)
-    dot(ctx, x + 1, y + 6,  P.tree1, 7, 5);
-    dot(ctx, x,     y + 4,  P.tree2, 9, 5);
-    dot(ctx, x + 1, y + 2,  P.tree2, 7, 4);
-    dot(ctx, x + 2, y,      P.tree3, 5, 3);
-    dot(ctx, x + 3, y - 1,  P.tree3, 3, 2);
-    // 하이라이트
-    dot(ctx, x + 2, y + 1,  P.white, 2, 1);
-  }
-}
-
-// 6. 농가 (귀여운 픽셀 집)
-function drawFarmhouse(ctx: CanvasRenderingContext2D, off: number) {
-  const hx = ((180 - Math.round(off * 0.22)) % (CW + 40) + CW + 40) % (CW + 40) - 20;
-  const hy = GY - 20;
-  // 벽
-  dot(ctx, hx,      hy + 6,  P.wall, 18, 14);
-  // 지붕
-  for (let i = 0; i < 9; i++) {
-    dot(ctx, hx + i, hy + 5 - i, P.roof, 18 - i * 2, 1);
-  }
-  dot(ctx, hx + 8, hy - 4, P.roof, 2, 1);
-  // 창문
-  dot(ctx, hx + 2,  hy + 8,  P.win,  4, 4);
-  dot(ctx, hx + 12, hy + 8,  P.win,  4, 4);
-  // 창문 십자
-  dot(ctx, hx + 4,  hy + 8,  P.uiBd, 1, 4);
-  dot(ctx, hx + 2,  hy + 10, P.uiBd, 4, 1);
-  dot(ctx, hx + 14, hy + 8,  P.uiBd, 1, 4);
-  dot(ctx, hx + 12, hy + 10, P.uiBd, 4, 1);
-  // 문
-  dot(ctx, hx + 7,  hy + 11, P.door, 4, 9);
-  dot(ctx, hx + 8,  hy + 13, P.white, 1, 1);
-  // 굴뚝
-  dot(ctx, hx + 13, hy - 2,  P.uiRed, 3, 6);
-  dot(ctx, hx + 12, hy - 3,  P.uiRed, 5, 2);
-  // 연기 (작은 도트)
-  dot(ctx, hx + 14, hy - 5,  P.cloudS, 2, 2);
-  dot(ctx, hx + 15, hy - 8,  P.cloudS, 1, 2);
-}
-
-// 7. 녹차밭 (계단식 + 귀여운 찻잎 패턴)
-function drawTeaField(ctx: CanvasRenderingContext2D, off: number) {
-  // 바닥 기본
-  dot(ctx, 0, GY, P.path, CW, CH - GY);
-
-  // 길 (파스텔 황토)
-  dot(ctx, 0, GY,     P.path,  CW, 5);
-  dot(ctx, 0, GY + 1, P.pathD, CW, 1);
-
-  // 길 줄무늬
-  const sOff = Math.round(off) % 14;
-  for (let x = -sOff; x < CW; x += 14) {
-    dot(ctx, x, GY + 2, P.pathL, 7, 1);
-  }
-
-  // 녹차밭 배경
-  dot(ctx, 0, GY + 5, P.tea1, CW, CH - GY - 5);
-
-  // 차나무 행 (귀여운 동글 패턴)
-  const tOff = Math.round(off * 0.85) % 18;
-  for (let x = -tOff; x < CW; x += 18) {
-    // 차나무 (동글동글)
-    dot(ctx, x,     GY + 6,  P.tea2, 7, 3);
-    dot(ctx, x + 1, GY + 5,  P.tea3, 5, 2);
-    dot(ctx, x + 2, GY + 4,  P.tea4, 3, 2);
-    dot(ctx, x + 2, GY + 4,  P.tea5, 1, 1);  // 하이라이트
-    // 두 번째 차나무
-    dot(ctx, x + 10, GY + 7,  P.tea2, 6, 2);
-    dot(ctx, x + 11, GY + 6,  P.tea3, 4, 2);
-    dot(ctx, x + 11, GY + 6,  P.tea5, 1, 1);
-  }
-
-  // 꽃 (핑크/노랑 교대)
-  const fOff = Math.round(off * 0.9) % 22;
-  for (let x = -fOff; x < CW; x += 22) {
-    // 핑크 꽃
-    dot(ctx, x + 4, GY + 3,  P.fl1, 1, 1);
-    dot(ctx, x + 3, GY + 4,  P.fl2, 3, 1);
-    dot(ctx, x + 4, GY + 5,  P.fl1, 1, 1);
-    dot(ctx, x + 4, GY + 4,  P.fl4, 1, 1);  // 꽃 중심
-    // 노란 꽃
-    dot(ctx, x + 14, GY + 3, P.flY, 1, 1);
-    dot(ctx, x + 13, GY + 4, P.flY, 3, 1);
-    dot(ctx, x + 14, GY + 5, P.flY, 1, 1);
-    dot(ctx, x + 14, GY + 4, P.white, 1, 1);
-  }
-}
-
-// 8. 나비 (귀여운 픽셀 나비, 날갯짓 애니메이션)
-const BUTTERFLIES = [
-  { ox: 50,  oy: 28, speed: 0.6,  color: P.bt1, wave: 0.0 },
-  { ox: 120, oy: 22, speed: 0.45, color: P.bt2, wave: 1.2 },
-  { ox: 190, oy: 32, speed: 0.55, color: P.bt3, wave: 2.4 },
-];
-
-function drawButterflies(ctx: CanvasRenderingContext2D, off: number, frame: number) {
-  for (const bt of BUTTERFLIES) {
-    const x = ((bt.ox - off * bt.speed) % (CW + 20) + CW + 20) % (CW + 20) - 10;
-    const y = bt.oy + Math.sin(frame * 0.08 + bt.wave) * 3;
-    const wing = Math.floor(frame * 0.18 + bt.wave) % 2; // 날갯짓
-    // 날개
-    if (wing === 0) {
-      dot(ctx, x - 3, y - 1, bt.color, 3, 2);
-      dot(ctx, x + 2, y - 1, bt.color, 3, 2);
-      dot(ctx, x - 2, y + 1, bt.color, 2, 1);
-      dot(ctx, x + 2, y + 1, bt.color, 2, 1);
-    } else {
-      dot(ctx, x - 2, y,     bt.color, 2, 2);
-      dot(ctx, x + 2, y,     bt.color, 2, 2);
+// 4. 마리오 블록 플랫폼 (배경)
+function drawBlockPlatforms(ctx: CanvasRenderingContext2D, off: number) {
+  const blockSize = 8;
+  const offset = Math.round(off * 0.35) % (blockSize * 3);
+  
+  // 중간 플랫폼들
+  const platforms = [
+    { y: GY - 28, start: 0, length: 40 },
+    { y: GY - 18, start: 60, length: 50 },
+  ];
+  
+  for (const platform of platforms) {
+    for (let x = -offset; x < CW + blockSize; x += blockSize) {
+      if (x + blockSize > platform.start && x < platform.start + platform.length) {
+        // 블록 그리기
+        dot(ctx, x, platform.y, P.block2, blockSize, 1);
+        dot(ctx, x, platform.y + 1, P.block1, blockSize - 1, blockSize - 2);
+        dot(ctx, x + 1, platform.y + 1, P.blockHL, blockSize - 2, 1);
+      }
     }
-    // 몸통
-    dot(ctx, x,     y,     P.black, 2, 3);
-    // 더듬이
-    dot(ctx, x - 1, y - 2, P.black, 1, 1);
-    dot(ctx, x + 2, y - 2, P.black, 1, 1);
   }
 }
 
-// 9. 장애물 (귀여운 파스텔 덤불)
+// 5. 녹차밭 (바닥)
+function drawTeaField(ctx: CanvasRenderingContext2D, off: number) {
+  // 바닥
+  dot(ctx, 0, GY, P.block1, CW, 4);
+  dot(ctx, 0, GY, P.block2, CW, 1);
+  dot(ctx, 0, GY + 1, P.blockHL, CW, 1);
+  
+  // 블록 패턴 (마리오 스타일)
+  const blockSize = 8;
+  const offset = Math.round(off) % blockSize;
+  
+  for (let x = -offset; x < CW; x += blockSize) {
+    dot(ctx, x, GY + 2, P.block2, 1, 2);
+    dot(ctx, x + blockSize - 1, GY + 2, P.block2, 1, 2);
+  }
+  
+  // 배경 녹차밭
+  dot(ctx, 0, GY + 4, P.mtn3, CW, CH - GY - 4);
+}
+
+// 6. 장애물 (마리오 Goomba → 녹차 벌레)
 function drawObstacle(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null) {
   const y = GY - OBH;
   if (img) {
@@ -339,23 +228,24 @@ function drawObstacle(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageEl
     ctx.drawImage(img, x, y, OBW, OBH);
     ctx.restore(); return;
   }
-  // 귀여운 동글 덤불 (파스텔 그린)
-  dot(ctx, x + 1, y + 4, P.tea1,  9, 7);
-  dot(ctx, x,     y + 5, P.tea1,  11, 5);
-  dot(ctx, x + 2, y + 2, P.tea2,  7, 5);
-  dot(ctx, x + 3, y + 1, P.tea3,  5, 4);
-  dot(ctx, x + 4, y,     P.tea4,  3, 3);
-  // 하이라이트
-  dot(ctx, x + 3, y + 1, P.tea5,  2, 1);
-  dot(ctx, x + 5, y + 2, P.tea5,  1, 1);
-  // 꽃 장식
-  dot(ctx, x + 2, y + 3, P.fl1,   1, 1);
-  dot(ctx, x + 7, y + 4, P.flY,   1, 1);
+  
+  // 마리오 Goomba 스타일 (녹차 벌레)
+  // 몸통
+  dot(ctx, x + 1, y + 2, P.enemy1, 9, 8);
+  dot(ctx, x,     y + 3, P.enemy1, 11, 6);
+  dot(ctx, x + 1, y + 2, P.enemy2, 9, 1);
+  
+  // 눈
+  dot(ctx, x + 2, y + 4, P.white, 2, 2);
+  dot(ctx, x + 7, y + 4, P.white, 2, 2);
+  dot(ctx, x + 2, y + 4, P.black, 1, 1);
+  dot(ctx, x + 7, y + 4, P.black, 1, 1);
+  
   // 그림자
   dot(ctx, x + 1, GY, P.shadow, 9, 1);
 }
 
-// 10. 에너지 겔 (귀여운 별 모양 캡슐)
+// 7. 아이템 (마리오 동전 → 녹차 잎)
 function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null, frame: number) {
   const bob = Math.round(Math.sin(frame * 0.14) * 1.5);
   const y   = GY - ITH - 4 + bob;
@@ -364,25 +254,30 @@ function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement
     ctx.drawImage(img, x, y, ITW, ITH);
     ctx.restore(); return;
   }
-  // 귀여운 별 캡슐 (파스텔 골드)
-  dot(ctx, x + 1, y,     "#ffe066", 7, 1);
-  dot(ctx, x,     y + 1, "#ffe066", 9, 7);
-  dot(ctx, x + 1, y + 8, "#ffe066", 7, 1);
-  // 하이라이트
-  dot(ctx, x + 1, y + 1, "#fff9c4", 3, 2);
-  // 별 기호
-  dot(ctx, x + 3, y + 3, "#f9a825", 1, 1);
-  dot(ctx, x + 4, y + 2, "#f9a825", 1, 3);
-  dot(ctx, x + 5, y + 3, "#f9a825", 1, 1);
-  dot(ctx, x + 3, y + 4, "#f9a825", 3, 1);
-  // 반짝임 파티클
+  
+  // 마리오 동전 스타일 (녹차 잎)
+  // 동전 테두리
+  dot(ctx, x + 2, y, P.coin, 5, 1);
+  dot(ctx, x + 1, y + 1, P.coin, 7, 1);
+  dot(ctx, x, y + 2, P.coin, 9, 5);
+  dot(ctx, x + 1, y + 7, P.coin, 7, 1);
+  dot(ctx, x + 2, y + 8, P.coin, 5, 1);
+  
+  // 동전 내부
+  dot(ctx, x + 2, y + 1, P.coinHL, 5, 1);
+  dot(ctx, x + 2, y + 2, P.coinHL, 5, 4);
+  
+  // 잎 모양 (녹차 테마)
+  dot(ctx, x + 4, y + 3, P.mtn1, 1, 3);
+  dot(ctx, x + 3, y + 4, P.mtn1, 3, 1);
+  
+  // 반짝임
   if (Math.floor(frame * 0.2) % 3 === 0) {
-    dot(ctx, x - 1, y + 2, "#fffde7", 1, 1);
-    dot(ctx, x + 10, y + 5, "#fffde7", 1, 1);
+    dot(ctx, x + 3, y + 2, P.white, 1, 1);
   }
 }
 
-// 11. 플레이어 (귀엽고 동글동글한 도트 캐릭터)
+// 8. 플레이어 (마리오 스타일)
 function drawPlayer(
   ctx: CanvasRenderingContext2D,
   py: number, img: HTMLImageElement | null,
@@ -398,45 +293,48 @@ function drawPlayer(
     return;
   }
 
-  // 귀여운 동글 캐릭터
+  // 마리오 스타일 도트 캐릭터
   const legF   = Math.floor(frame / 7) % 4;
-  const bodyC  = isStep2 ? "#90caf9" : "#f48fb1";  // 파스텔 블루 / 파스텔 핑크
+  const bodyC  = isStep2 ? "#0066cc" : "#ff0000";  // 파란색 / 빨간색
   const skinC  = "#ffcc99";
-  const hairC  = isStep2 ? "#5c6bc0" : "#e91e63";
-  const shoeC  = isStep2 ? "#5c6bc0" : "#e91e63";
+  const hairC  = isStep2 ? "#333333" : "#8b4513";  // 검은색 / 갈색
+  const shoeC  = "#333333";
+  const gloveC = "#ffff00";  // 노란 장갑
 
   // 그림자
   if (grounded) {
-    dot(ctx, PLX + 1, GY + 1, P.shadow, PLW - 2, 2);
+    dot(ctx, PLX + 1, GY + 1, P.shadow, PLW - 2, 1);
   }
-  // 머리 (동글동글)
+  
+  // 머리
   dot(ctx, PLX + 3, py,      skinC, 7, 6);
   dot(ctx, PLX + 2, py + 1,  skinC, 9, 4);
-  dot(ctx, PLX + 3, py + 5,  skinC, 7, 1);
+  
   // 머리카락
   dot(ctx, PLX + 3, py,      hairC, 7, 2);
-  dot(ctx, PLX + 2, py + 1,  hairC, 2, 1);
-  dot(ctx, PLX + 9, py + 1,  hairC, 2, 1);
-  // 눈 (귀여운 점)
-  dot(ctx, PLX + 4, py + 3,  "#333", 2, 2);
-  dot(ctx, PLX + 8, py + 3,  "#333", 2, 2);
-  // 눈 하이라이트
-  dot(ctx, PLX + 4, py + 3,  P.white, 1, 1);
-  dot(ctx, PLX + 8, py + 3,  P.white, 1, 1);
-  // 볼 (핑크)
-  dot(ctx, PLX + 3, py + 4,  "#ffb3c6", 2, 1);
-  dot(ctx, PLX + 9, py + 4,  "#ffb3c6", 2, 1);
-  // 입 (웃음)
-  dot(ctx, PLX + 5, py + 5,  "#e57373", 3, 1);
-  dot(ctx, PLX + 4, py + 5,  "#e57373", 1, 1);
-  dot(ctx, PLX + 8, py + 5,  "#e57373", 1, 1);
+  dot(ctx, PLX + 2, py + 1,  hairC, 2, 2);
+  dot(ctx, PLX + 9, py + 1,  hairC, 2, 2);
+  
+  // 눈
+  dot(ctx, PLX + 4, py + 2,  P.black, 1, 2);
+  dot(ctx, PLX + 8, py + 2,  P.black, 1, 2);
+  dot(ctx, PLX + 4, py + 2,  P.white, 1, 1);
+  dot(ctx, PLX + 8, py + 2,  P.white, 1, 1);
+  
+  // 입
+  dot(ctx, PLX + 5, py + 4,  P.black, 3, 1);
+  
   // 몸통
-  dot(ctx, PLX + 3, py + 6,  bodyC, 7, 5);
-  dot(ctx, PLX + 2, py + 7,  bodyC, 9, 3);
-  // 팔 (달리기 애니메이션)
+  dot(ctx, PLX + 2, py + 6,  bodyC, 9, 5);
+  dot(ctx, PLX + 3, py + 7,  bodyC, 7, 3);
+  
+  // 장갑 (팔)
   const armSwing = legF < 2 ? 1 : -1;
-  dot(ctx, PLX + 1, py + 7 + armSwing,  bodyC, 2, 3);
-  dot(ctx, PLX + 10, py + 7 - armSwing, bodyC, 2, 3);
+  dot(ctx, PLX, py + 7 + armSwing,  gloveC, 2, 2);
+  dot(ctx, PLX + 11, py + 7 - armSwing, gloveC, 2, 2);
+  dot(ctx, PLX + 1, py + 8 + armSwing,  bodyC, 1, 1);
+  dot(ctx, PLX + 12, py + 8 - armSwing, bodyC, 1, 1);
+  
   // 다리
   if (grounded) {
     if (legF === 0) {
@@ -450,72 +348,75 @@ function drawPlayer(
       dot(ctx, PLX + 3, py + 13, shoeC, 4, 2);
       dot(ctx, PLX + 7, py + 14, shoeC, 3, 2);
     } else if (legF === 2) {
-      dot(ctx, PLX + 3, py + 11, bodyC, 3, 4);
-      dot(ctx, PLX + 7, py + 11, bodyC, 3, 2);
-      dot(ctx, PLX + 3, py + 14, shoeC, 3, 2);
-      dot(ctx, PLX + 6, py + 12, shoeC, 4, 2);
+      dot(ctx, PLX + 2, py + 11, bodyC, 4, 4);
+      dot(ctx, PLX + 8, py + 11, bodyC, 3, 3);
+      dot(ctx, PLX + 2, py + 14, shoeC, 4, 2);
+      dot(ctx, PLX + 8, py + 13, shoeC, 3, 2);
     } else {
-      dot(ctx, PLX + 3, py + 11, bodyC, 3, 2);
+      dot(ctx, PLX + 3, py + 11, bodyC, 3, 3);
       dot(ctx, PLX + 7, py + 11, bodyC, 3, 4);
-      dot(ctx, PLX + 2, py + 12, shoeC, 4, 2);
-      dot(ctx, PLX + 7, py + 14, shoeC, 3, 2);
+      dot(ctx, PLX + 3, py + 13, shoeC, 3, 2);
+      dot(ctx, PLX + 7, py + 14, shoeC, 4, 2);
     }
   } else {
-    // 점프 자세
-    dot(ctx, PLX + 2, py + 11, bodyC, 4, 3);
-    dot(ctx, PLX + 7, py + 11, bodyC, 4, 3);
-    dot(ctx, PLX + 1, py + 13, shoeC, 4, 2);
-    dot(ctx, PLX + 8, py + 13, shoeC, 4, 2);
+    // 점프 중
+    dot(ctx, PLX + 3, py + 11, bodyC, 3, 2);
+    dot(ctx, PLX + 7, py + 11, bodyC, 3, 2);
+    dot(ctx, PLX + 3, py + 12, shoeC, 3, 1);
+    dot(ctx, PLX + 7, py + 12, shoeC, 3, 1);
   }
 }
 
-// ── 유틸 ─────────────────────────────────────────────────────────────────────
-function formatDist(n: number): string {
-  return (n / 1000).toFixed(3) + " km";
+// ── 게임 로직 ──────────────────────────────────────────────────────────────────
+
+function isColliding(x1: number, y1: number, w1: number, h1: number, x2: number, y2: number, w2: number, h2: number, margin = 0) {
+  return x1 + w1 - margin > x2 && x1 + margin < x2 + w2 && y1 + h1 - margin > y2 && y1 + margin < y2 + h2;
 }
+
+function formatDist(score: number) {
+  const km = Math.floor(score / 1000);
+  const m = score % 1000;
+  return `${km}.${String(m).padStart(3, "0")} km`;
+}
+
 function loadImg(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload  = () => resolve(img);
+    img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = src;
   });
 }
-function isColliding(px: number, py: number, pw: number, ph: number, sx: number, sy: number, sw: number, sh: number, margin = 2): boolean {
-  return px + margin < sx + sw - margin && px + pw - margin > sx + margin && py + margin < sy + sh - margin && py + ph - margin > sy + margin;
-}
 
-// ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef    = useRef<number>(0);
-
-  const statusRef     = useRef<GameStatus>("idle");
-  const stepRef       = useRef<1 | 2>(1);
-  const scoreRef      = useRef(0);
-  const livesRef      = useRef(MAX_LIVES);
+  const statusRef = useRef<GameStatus>("idle");
+  const stepRef = useRef<1 | 2>(1);
+  const scoreRef = useRef(0);
+  const livesRef = useRef(MAX_LIVES);
   const invincibleRef = useRef(false);
-  const invTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const frameRef      = useRef(0);
-  const spritesRef    = useRef<Sprite[]>([]);
-  const spriteIdRef   = useRef(0);
-  const groundOffRef  = useRef(0);
-  const hillOffRef    = useRef(0);
-  const particlesRef  = useRef<Particle[]>([]);
+  const invTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const rafRef = useRef<number>(0);
+  const frameRef = useRef(0);
+  const spriteIdRef = useRef(0);
+  const spritesRef = useRef<Sprite[]>([]);
+  const groundOffRef = useRef(0);
+  const hillOffRef = useRef(0);
+  const particlesRef = useRef<Particle[]>([]);
   const particleIdRef = useRef(0);
 
-  const playerYRef  = useRef(GY - PLH);
+  const playerYRef = useRef(GY - PLH);
   const playerVYRef = useRef(0);
   const groundedRef = useRef(true);
 
-  const imgsRef    = useRef<Record<string, HTMLImageElement | null>>({});
+  const imgsRef = useRef<Record<string, HTMLImageElement | null>>({});
   const effectsRef = useRef<FloatEffect[]>([]);
   const effectIdRef = useRef(0);
 
-  const [status,  setStatus]  = useState<GameStatus>("idle");
-  const [step,    setStep]    = useState<1 | 2>(1);
-  const [score,   setScore]   = useState(0);
-  const [lives,   setLives]   = useState(MAX_LIVES);
+  const [status, setStatus] = useState<GameStatus>("idle");
+  const [step, setStep] = useState<1 | 2>(1);
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(MAX_LIVES);
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
@@ -544,9 +445,8 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     invTimerRef.current = setTimeout(() => { invincibleRef.current = false; }, INVINCIBLE_MS);
   }, []);
 
-  // 찻잎 파티클 생성
   const spawnLeaves = useCallback((x: number, y: number) => {
-    const colors = [P.tea3, P.tea4, P.tea5, P.fl1, P.flY];
+    const colors = [P.mtn3, P.block1, P.coin, P.coinHL];
     for (let i = 0; i < 5; i++) {
       particlesRef.current.push({
         id: particleIdRef.current++,
@@ -560,7 +460,6 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     }
   }, []);
 
-  // ── 게임 루프 ──
   const gameLoop = useCallback(() => {
     if (statusRef.current !== "playing") return;
     const canvas = canvasRef.current;
@@ -569,12 +468,11 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
 
-    const cfg    = STEP_CONFIG[stepRef.current];
+    const cfg = STEP_CONFIG[stepRef.current];
     const target = stepRef.current === 1 ? STEP1_TARGET : STEP2_TARGET;
     frameRef.current++;
     const fc = frameRef.current;
 
-    // 점수
     scoreRef.current = Math.min(scoreRef.current + cfg.scorePerFrame, target);
     if (scoreRef.current >= target) {
       statusRef.current = stepRef.current === 1 ? "step_clear" : "cleared";
@@ -582,7 +480,6 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       cancelAnimationFrame(rafRef.current); return;
     }
 
-    // 물리
     if (!groundedRef.current) {
       playerVYRef.current = Math.min(playerVYRef.current + GRAVITY, MAX_FALL);
       playerYRef.current += playerVYRef.current;
@@ -593,11 +490,9 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       }
     }
 
-    // 스크롤
     groundOffRef.current += cfg.scrollSpeed;
-    hillOffRef.current   += cfg.scrollSpeed;
+    hillOffRef.current += cfg.scrollSpeed;
 
-    // 스프라이트
     spritesRef.current = spritesRef.current
       .map((s) => ({ ...s, x: s.x - cfg.scrollSpeed }))
       .filter((s) => s.x > -OBW - 4);
@@ -609,7 +504,6 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       });
     }
 
-    // 충돌
     const py = playerYRef.current;
     for (let i = spritesRef.current.length - 1; i >= 0; i--) {
       const s = spritesRef.current[i];
@@ -638,50 +532,39 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       }
     }
 
-    // 파티클
     particlesRef.current = particlesRef.current
       .map((p) => ({ ...p, x: p.x + p.vx, y: p.y + p.vy, vy: p.vy + 0.12, life: p.life - 1 }))
       .filter((p) => p.life > 0);
 
-    // 이펙트
     effectsRef.current = effectsRef.current
       .map((e) => ({ ...e, y: e.y - 0.28, life: e.life - 1 }))
       .filter((e) => e.life > 0);
 
-    // ── 렌더링 ──────────────────────────────────────────────────────────────
     ctx.clearRect(0, 0, CW, CH);
 
-    // 배경 레이어 순서
     drawSky(ctx);
-    drawRainbow(ctx, stepRef.current === 1 ? 1 : 0.3);
     drawClouds(ctx, fc);
     drawMountains(ctx, hillOffRef.current);
-    drawTrees(ctx, hillOffRef.current);
-    drawFarmhouse(ctx, hillOffRef.current);
+    drawBlockPlatforms(ctx, hillOffRef.current);
     drawTeaField(ctx, groundOffRef.current);
-    drawButterflies(ctx, hillOffRef.current, fc);
 
-    // 스프라이트
     for (const s of spritesRef.current) {
       if (s.type === "obstacle") drawObstacle(ctx, Math.round(s.x), imgsRef.current[IMG_OBSTACLE]);
       else drawGel(ctx, Math.round(s.x), imgsRef.current[IMG_GEL], fc);
     }
 
-    // 파티클
     for (const p of particlesRef.current) {
       ctx.globalAlpha = p.life / 50;
       dot(ctx, Math.round(p.x), Math.round(p.y), p.color, p.size, p.size);
     }
     ctx.globalAlpha = 1;
 
-    // 플레이어
     const blinkOn = invincibleRef.current && Math.floor(fc / 4) % 2 === 0;
     if (!blinkOn) {
       const pImg = imgsRef.current[stepRef.current === 1 ? IMG_YEONGSEO : IMG_JINSEONG];
       drawPlayer(ctx, Math.round(playerYRef.current), pImg, fc, stepRef.current === 2, groundedRef.current);
     }
 
-    // 이펙트 텍스트
     for (const ef of effectsRef.current) {
       ctx.globalAlpha = ef.life / 45;
       pixelText(ctx, ef.text, Math.round(ef.x), Math.round(ef.y), P.uiGold, 4, "center");
@@ -706,7 +589,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   }, [gameLoop]);
 
   const handleStep2Start = useCallback(() => startGame(2), [startGame]);
-  const handleRetry      = useCallback(() => startGame(stepRef.current), [startGame]);
+  const handleRetry = useCallback(() => startGame(stepRef.current), [startGame]);
   const handleFinalClear = useCallback(() => onComplete(), [onComplete]);
 
   useEffect(() => () => {
@@ -714,16 +597,14 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     if (invTimerRef.current) clearTimeout(invTimerRef.current);
   }, []);
 
-  // ── 렌더 ─────────────────────────────────────────────────────────────────
   const isPlaying = ["playing","gameover","step_clear","cleared"].includes(status);
-  const target    = step === 1 ? STEP1_TARGET : STEP2_TARGET;
-  const pct       = Math.min(100, Math.round((score / target) * 100));
+  const target = step === 1 ? STEP1_TARGET : STEP2_TARGET;
+  const pct = Math.min(100, Math.round((score / target) * 100));
 
   const pxFont: React.CSSProperties = {
     fontFamily: "'Press Start 2P', 'Courier New', monospace",
   };
 
-  // 파스텔 팝업 공통 스타일
   const popupBase: React.CSSProperties = {
     background: "linear-gradient(135deg, #f0faf0 0%, #e8f5e9 100%)",
     borderRadius: 0,
@@ -739,7 +620,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       stage={stage}
       score={score}
       maxScore={target}
-      hintText="스페이스바·클릭·터치로 점프! 장애물 피하고 에너지 겔 먹기 🍵"
+      hintText="스페이스바·클릭·터치로 점프! 장애물 피하고 녹차 잎 먹기 🍵"
       showProgress={false}
     >
       <style>{`
@@ -771,45 +652,40 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       `}</style>
 
       <div className="flex-1 flex flex-col items-center px-3 py-2 gap-3">
-
-        {/* ── 시작 화면 ── */}
         {!started && (
           <div className="flex-1 flex flex-col items-center justify-center w-full">
             <div
               style={{
-                background: "linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 50%, #f3e5f5 100%)",
+                background: "linear-gradient(135deg, #4a90e2 0%, #87ceeb 100%)",
                 padding: "22px 20px",
                 maxWidth: 320,
                 width: "100%",
-                boxShadow: "4px 4px 0 #a5d6a7, 8px 8px 0 #c8e6c9",
+                boxShadow: "4px 4px 0 #2d5016, 8px 8px 0 #6ba547",
                 ...pxFont,
               }}
             >
-              {/* 타이틀 */}
               <div style={{ textAlign: "center", marginBottom: 14 }}>
-                <div style={{ fontSize: "0.52rem", color: P.uiPink, marginBottom: 4, letterSpacing: "0.04em" }}>
-                  ✿ STAGE 11 ✿
+                <div style={{ fontSize: "0.52rem", color: "#ffd700", marginBottom: 4, letterSpacing: "0.04em" }}>
+                  ★ STAGE 11 ★
                 </div>
-                <div style={{ fontSize: "0.68rem", color: P.uiTxt, lineHeight: 1.9 }}>
-                  보성 녹차마라톤
+                <div style={{ fontSize: "0.68rem", color: "#ffffff", lineHeight: 1.9 }}>
+                  녹차 마을 마라톤
                 </div>
-                <div style={{ fontSize: "0.44rem", color: P.tea2, marginTop: 2 }}>
-                  🍵 BOSEONG GREEN TEA MARATHON 🍵
+                <div style={{ fontSize: "0.44rem", color: "#c8e6c9", marginTop: 2 }}>
+                  🍵 TEA FIELD MARATHON 🍵
                 </div>
               </div>
 
-              {/* 구분선 (파스텔 도트) */}
               <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 12 }}>
-                {["#f48fb1","#ffe066","#a5d6a7","#90caf9","#ce93d8"].map((c,i) => (
-                  <div key={i} style={{ width: 5, height: 5, background: c, borderRadius: 1 }} />
+                {["#ff0000","#ffd700","#6ba547","#0066cc","#c8e6c9"].map((c,i) => (
+                  <div key={i} style={{ width: 5, height: 5, background: c, borderRadius: 0 }} />
                 ))}
               </div>
 
-              {/* 거리 카드 */}
               <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 14 }}>
                 {[
-                  { icon: "♀", name: "영서", dist: "10.000 km", bg: "#fce4ec", bd: P.uiPink, tc: P.uiPink },
-                  { icon: "♂", name: "진성", dist: "42.195 km", bg: "#e3f2fd", bd: P.uiBlue, tc: P.uiBlue },
+                  { icon: "♀", name: "영서", dist: "10.000 km", bg: "#ffe6e6", bd: "#ff0000", tc: "#ff0000" },
+                  { icon: "♂", name: "진성", dist: "42.195 km", bg: "#e6f2ff", bd: "#0066cc", tc: "#0066cc" },
                 ].map((p) => (
                   <div key={p.name} style={{
                     display: "flex", alignItems: "center", gap: 8,
@@ -817,38 +693,36 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                     boxShadow: `2px 2px 0 ${p.bd}44`,
                   }}>
                     <span style={{ fontSize: "0.65rem", color: p.tc }}>{p.icon}</span>
-                    <span style={{ fontSize: "0.50rem", color: "#555", flex: 1 }}>{p.name}</span>
+                    <span style={{ fontSize: "0.50rem", color: "#333", flex: 1 }}>{p.name}</span>
                     <span style={{ fontSize: "0.52rem", color: p.tc, fontWeight: "bold" }}>{p.dist}</span>
                   </div>
                 ))}
                 <div style={{
                   display: "flex", justifyContent: "space-between",
-                  padding: "5px 10px", background: "#fffde7",
-                  boxShadow: `2px 2px 0 ${P.uiGold}66`,
+                  padding: "5px 10px", background: "#ffd700",
+                  boxShadow: `2px 2px 0 #ffed4e66`,
                 }}>
-                  <span style={{ fontSize: "0.50rem", color: P.uiGold }}>★ TOTAL</span>
-                  <span style={{ fontSize: "0.52rem", color: P.uiGold, fontWeight: "bold" }}>52.195 km</span>
+                  <span style={{ fontSize: "0.50rem", color: "#333" }}>★ TOTAL</span>
+                  <span style={{ fontSize: "0.52rem", color: "#333", fontWeight: "bold" }}>52.195 km</span>
                 </div>
               </div>
 
-              {/* 조작 안내 */}
-              <div style={{ fontSize: "0.42rem", color: "#888", lineHeight: 2.2, textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: "0.42rem", color: "#ffffff", lineHeight: 2.2, textAlign: "center", marginBottom: 16 }}>
                 [SPACE] / CLICK / TOUCH → JUMP<br />
-                🌿 AVOID BUSHES &nbsp;·&nbsp; ⭐ COLLECT GEL
+                🌿 AVOID ENEMIES &nbsp;·&nbsp; 🍃 COLLECT LEAVES
               </div>
 
-              {/* 시작 버튼 */}
               <button
                 className="s11-btn"
                 onClick={() => { setStarted(true); startGame(1); }}
                 style={{
                   width: "100%",
-                  background: "linear-gradient(135deg, #a5d6a7, #66bb6a)",
-                  color: "#1b5e20",
+                  background: "#ffd700",
+                  color: "#333",
                   border: "none",
                   padding: "11px 0",
                   fontSize: "0.60rem",
-                  boxShadow: `3px 3px 0 #2e7d32`,
+                  boxShadow: `3px 3px 0 #ffed4e`,
                   letterSpacing: "0.04em",
                   ...pxFont,
                 }}
@@ -859,42 +733,36 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
           </div>
         )}
 
-        {/* ── 게임 플레이 영역 ── */}
         {started && isPlaying && (
           <div className="flex flex-col items-center gap-2 w-full">
-
-            {/* HUD */}
             <div
               style={{
                 width: "100%", maxWidth: CW * PX,
-                background: "linear-gradient(135deg, #f1f8e9, #e8f5e9)",
+                background: "linear-gradient(135deg, #4a90e2, #87ceeb)",
                 padding: "6px 10px",
                 display: "flex", alignItems: "center", gap: 8,
-                boxShadow: "3px 3px 0 #a5d6a7",
+                boxShadow: "3px 3px 0 #6ba547",
                 ...pxFont,
               }}
             >
-              {/* 스텝 배지 */}
               <div style={{
                 fontSize: "0.40rem",
-                color: step === 1 ? P.uiPink : P.uiBlue,
-                background: step === 1 ? "#fce4ec" : "#e3f2fd",
+                color: step === 1 ? "#ff0000" : "#0066cc",
+                background: step === 1 ? "#ffe6e6" : "#e6f2ff",
                 padding: "3px 7px",
-                boxShadow: `1px 1px 0 ${step === 1 ? P.uiPink : P.uiBlue}88`,
+                boxShadow: `1px 1px 0 ${step === 1 ? "#ff0000" : "#0066cc"}88`,
                 flexShrink: 0,
               }}>
                 {step === 1 ? "P1 영서♀" : "P2 진성♂"}
               </div>
 
-              {/* 거리 */}
-              <div style={{ fontSize: "0.46rem", color: P.uiTxt, flexShrink: 0 }}>
+              <div style={{ fontSize: "0.46rem", color: "#ffffff", flexShrink: 0 }}>
                 {formatDist(score)}
               </div>
 
-              {/* 프로그레스 바 (파스텔 도트 패턴) */}
               <div style={{
                 flex: 1, height: 7,
-                background: "#e8f5e9",
+                background: "#ffffff",
                 boxShadow: "inset 1px 1px 0 #c8e6c9",
                 position: "relative", overflow: "hidden",
               }}>
@@ -902,21 +770,19 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                   position: "absolute", left: 0, top: 0, bottom: 0,
                   width: `${pct}%`,
                   background: step === 1
-                    ? "repeating-linear-gradient(90deg,#a5d6a7 0 3px,#66bb6a 3px 6px)"
-                    : "repeating-linear-gradient(90deg,#90caf9 0 3px,#42a5f5 3px 6px)",
+                    ? "repeating-linear-gradient(90deg,#ff0000 0 3px,#cc0000 3px 6px)"
+                    : "repeating-linear-gradient(90deg,#0066cc 0 3px,#0044aa 3px 6px)",
                   transition: "width 200ms steps(16)",
                 }} />
-                {/* 진행 퍼센트 */}
                 <div style={{
                   position: "absolute", inset: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.34rem", color: "#2e7d32",
+                  fontSize: "0.34rem", color: "#333",
                 }}>
                   {pct}%
                 </div>
               </div>
 
-              {/* 목숨 하트 */}
               <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
                 {Array.from({ length: MAX_LIVES }, (_, i) => (
                   <span
@@ -936,12 +802,11 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
               </div>
             </div>
 
-            {/* 캔버스 */}
             <div
               style={{
                 position: "relative", width: "100%", maxWidth: CW * PX,
                 cursor: "pointer", touchAction: "none",
-                boxShadow: "4px 4px 0 #a5d6a7, 8px 8px 0 #c8e6c9",
+                boxShadow: "4px 4px 0 #6ba547, 8px 8px 0 #a5d6a7",
               }}
               onClick={() => jump()}
               onTouchStart={(e) => { e.preventDefault(); jump(); }}
@@ -953,25 +818,23 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                 style={{ display: "block", width: "100%", height: "auto" }}
               />
 
-              {/* Step 1 클리어 */}
               {status === "step_clear" && (
                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,250,240,0.82)" }}>
-                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #a5d6a7" }}>
-                    <div style={{ fontSize: "0.55rem", color: P.uiPink, marginBottom: 8, animation: "s11-sparkle 1s infinite" }}>
-                      ✿ STEP 1 CLEAR ✿
+                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #6ba547" }}>
+                    <div style={{ fontSize: "0.55rem", color: "#ff0000", marginBottom: 8, animation: "s11-sparkle 1s infinite" }}>
+                      ★ STEP 1 CLEAR ★
                     </div>
-                    <div style={{ fontSize: "0.44rem", color: P.uiTxt, lineHeight: 2.2, marginBottom: 14 }}>
+                    <div style={{ fontSize: "0.44rem", color: "#333", lineHeight: 2.2, marginBottom: 14 }}>
                       영서 10km 완주!<br />
-                      <span style={{ color: P.uiPink }}>진성이에게 바통 터치~</span><br />
-                      <span style={{ fontSize: "0.38rem", color: "#888" }}>🏃‍♀️💨🏃</span>
+                      <span style={{ color: "#0066cc" }}>진성이에게 바통 터치~</span>
                     </div>
                     <button
                       className="s11-btn"
                       onClick={(e) => { e.stopPropagation(); handleStep2Start(); }}
                       style={{
-                        background: "linear-gradient(135deg,#f48fb1,#f06292)",
-                        color: P.white, border: "none", padding: "9px 16px",
-                        fontSize: "0.44rem", boxShadow: "2px 2px 0 #c2185b",
+                        background: "#0066cc",
+                        color: "#ffffff", border: "none", padding: "9px 16px",
+                        fontSize: "0.44rem", boxShadow: "2px 2px 0 #003d99",
                         width: "100%", ...pxFont,
                       }}
                     >
@@ -981,24 +844,22 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                 </div>
               )}
 
-              {/* 게임 오버 */}
               {status === "gameover" && (
                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,250,240,0.82)" }}>
-                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #ef9a9a" }}>
-                    <div style={{ fontSize: "0.55rem", color: P.uiRed, marginBottom: 8, animation: "s11-blink 0.9s infinite" }}>
+                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #ef5350" }}>
+                    <div style={{ fontSize: "0.55rem", color: "#ef5350", marginBottom: 8, animation: "s11-blink 0.9s infinite" }}>
                       GAME OVER
                     </div>
-                    <div style={{ fontSize: "0.42rem", color: P.uiTxt, lineHeight: 2.2, marginBottom: 14 }}>
+                    <div style={{ fontSize: "0.42rem", color: "#333", lineHeight: 2.2, marginBottom: 14 }}>
                       {step === 1 ? "영서" : "진성이"}가<br />
-                      <span style={{ color: P.uiGold }}>{formatDist(score)}</span> 달렸어요<br />
-                      <span style={{ fontSize: "0.38rem", color: "#888" }}>다시 도전해봐요! 🌿</span>
+                      <span style={{ color: "#ffd700" }}>{formatDist(score)}</span> 달렸어요
                     </div>
                     <button
                       className="s11-btn"
                       onClick={(e) => { e.stopPropagation(); handleRetry(); }}
                       style={{
-                        background: "linear-gradient(135deg,#ef9a9a,#ef5350)",
-                        color: P.white, border: "none", padding: "9px 16px",
+                        background: "#ef5350",
+                        color: "#ffffff", border: "none", padding: "9px 16px",
                         fontSize: "0.44rem", boxShadow: "2px 2px 0 #b71c1c",
                         width: "100%", ...pxFont,
                       }}
@@ -1009,26 +870,25 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                 </div>
               )}
 
-              {/* 최종 클리어 */}
               {status === "cleared" && (
                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,250,240,0.82)" }}>
-                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #ffe066, 8px 8px 0 #f9a825" }}>
-                    <div style={{ fontSize: "0.52rem", color: P.uiGold, marginBottom: 6, animation: "s11-sparkle 0.8s infinite" }}>
+                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #ffd700, 8px 8px 0 #ffed4e" }}>
+                    <div style={{ fontSize: "0.52rem", color: "#ffd700", marginBottom: 6, animation: "s11-sparkle 0.8s infinite" }}>
                       ★ MARATHON CLEAR ★
                     </div>
-                    <div style={{ height: 2, background: "repeating-linear-gradient(90deg,#f48fb1 0 4px,#ffe066 4px 8px,#a5d6a7 8px 12px,#90caf9 12px 16px)", marginBottom: 10 }} />
-                    <div style={{ fontSize: "0.44rem", color: P.uiTxt, lineHeight: 2.4, marginBottom: 16 }}>
+                    <div style={{ height: 2, background: "repeating-linear-gradient(90deg,#ff0000 0 4px,#ffd700 4px 8px,#6ba547 8px 12px,#0066cc 12px 16px)", marginBottom: 10 }} />
+                    <div style={{ fontSize: "0.44rem", color: "#333", lineHeight: 2.4, marginBottom: 16 }}>
                       52.195km 완주 성공!<br />
-                      <span style={{ color: P.uiPink }}>우리의 첫 마라톤 클리어</span><br />
-                      <span style={{ fontSize: "0.40rem", color: P.uiGold }}>🥇 CONGRATULATIONS 🥇</span>
+                      <span style={{ color: "#ff0000" }}>우리의 첫 마라톤 클리어</span><br />
+                      <span style={{ fontSize: "0.40rem", color: "#ffd700" }}>🥇 CONGRATULATIONS 🥇</span>
                     </div>
                     <button
                       className="s11-btn"
                       onClick={(e) => { e.stopPropagation(); handleFinalClear(); }}
                       style={{
-                        background: "linear-gradient(135deg,#ffe066,#f9a825)",
-                        color: "#4e342e", border: "none", padding: "11px 20px",
-                        fontSize: "0.50rem", boxShadow: "3px 3px 0 #e65100",
+                        background: "#ffd700",
+                        color: "#333", border: "none", padding: "11px 20px",
+                        fontSize: "0.50rem", boxShadow: "3px 3px 0 #ffed4e",
                         width: "100%", ...pxFont, letterSpacing: "0.04em",
                       }}
                     >
@@ -1039,10 +899,9 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
               )}
             </div>
 
-            {/* 하단 안내 */}
             {status === "playing" && (
-              <div style={{ ...pxFont, fontSize: "0.36rem", color: P.tea2, textAlign: "center", opacity: 0.85 }}>
-                [SPACE] / CLICK / TOUCH → JUMP &nbsp;·&nbsp; 🌿 avoid &nbsp;·&nbsp; ⭐ collect
+              <div style={{ ...pxFont, fontSize: "0.36rem", color: "#2d5016", textAlign: "center", opacity: 0.85 }}>
+                [SPACE] / CLICK / TOUCH → JUMP &nbsp;·&nbsp; 🌿 avoid &nbsp;·&nbsp; 🍃 collect
               </div>
             )}
           </div>
