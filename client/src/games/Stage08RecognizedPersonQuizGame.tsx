@@ -10,7 +10,7 @@ interface Props {
   onComplete: () => void;
 }
 
-const ANSWER_QUIZ3 = "보림"; // TODO: 실제 친구 이름으로 변경
+const VALID_ANSWERS_QUIZ3 = ["보림", "김보림", "보림이", "뾰리"];
 
 // 배열 섞기 유틸
 function shuffle<T>(array: T[]): T[] {
@@ -48,7 +48,7 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
   const handleQ1 = (opt: string) => {
     if (q1Status === "correct") return;
     setQ1Selected(opt);
-    
+
     if (opt === "가은") {
       setQ1Status("correct");
       setTimeout(() => {
@@ -112,12 +112,14 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
 
   // ================= Quiz 3 =================
   const [q3Input, setQ3Input] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   const handleQ3Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const val = q3Input.trim();
-    if (val === ANSWER_QUIZ3) {
+    const val = q3Input.trim().replace(/\s+/g, "");
+    if (VALID_ANSWERS_QUIZ3.includes(val)) {
       setCleared(true);
+      setTimeout(onComplete, 400);
     } else {
       setErrorShake("q3");
       triggerBite();
@@ -138,7 +140,7 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
       hintText="영서 친구 영역 모의고사입니다. 3개의 문제를 모두 맞춰주세요!"
     >
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 w-full relative">
-        
+
         {/* 헤더 타이틀 영역 (페스티벌 느낌의 밝은 컬러) */}
         {!cleared && (
           <div className="text-center mb-6 max-w-sm w-full bg-black/70 p-4 rounded-xl backdrop-blur-sm border border-white/10">
@@ -146,10 +148,10 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
               🎤 Stage 8: 그민페
             </h2>
             <p className="text-[0.85rem] font-bold leading-snug mb-2" style={{ color: "oklch(0.95 0.05 180)" }}>
-              처음으로 간 페스티벌!<br/>진성이는 영서 친구들에게 유명인사가 되어버렸다?!
+              처음으로 간 페스티벌!<br />진성이는 영서 친구들에게 유명인사가 되어버렸다?!
             </p>
             <p className="text-xs opacity-90" style={{ color: "oklch(0.8 0.1 140)" }}>
-              진성이를 알아보는 친구들을 피해 다니려면<br/>영서 친구들도 잘 알아둬야겠지!?
+              진성이를 알아보는 친구들을 피해 다니려면<br />영서 친구들도 잘 알아둬야겠지?
             </p>
           </div>
         )}
@@ -160,13 +162,13 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
             <div className="bg-black/60 p-6 rounded-2xl border border-white/20 w-full shadow-lg backdrop-blur-md">
               <span className="inline-block bg-emerald-500/80 text-white text-xs font-bold px-2 py-1 rounded-full mb-3">Quiz 1</span>
               <p className="font-bold text-lg mb-5 text-white leading-relaxed">
-                그민페에서 맥주 사러 뛰어가는<br/>진성이를 알아본 친구의 이름은?
+                그민페에서 맥주 사러 뛰어가는<br />진성이를 알아본 친구의 이름은?
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {q1Options.map((opt) => {
                   const isSelected = q1Selected === opt;
                   let btnClass = "bg-white/10 border-white/20 text-white hover:bg-white/20";
-                  
+
                   if (isSelected) {
                     if (q1Status === "correct") {
                       btnClass = "bg-emerald-500/90 border-emerald-400 text-white shadow-[0_0_15px_rgba(52,211,153,0.6)]";
@@ -202,9 +204,9 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
                 <span className="text-xs font-bold text-cyan-200">{Object.keys(matchedPairs).length} / 4 완료</span>
               </div>
               <p className="font-bold text-base mb-5 text-white leading-relaxed text-center">
-                다음 이름을 보고<br/>알맞은 관계와 이으시오.
+                다음 이름을 보고<br />알맞은 관계와 이으시오.
               </p>
-              
+
               <div className="flex justify-between gap-4">
                 {/* 이름 목록 */}
                 <div className="flex-1 flex flex-col gap-3">
@@ -213,7 +215,7 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
                     const isMatched = !!matchedPairs[name];
                     const isSelected = selName === name;
                     let btnClass = "bg-white/10 border-white/20 text-white hover:bg-white/20";
-                    
+
                     if (isMatched) btnClass = "bg-emerald-500/30 border-emerald-500/50 text-emerald-200 opacity-60";
                     else if (isSelected) btnClass = "bg-cyan-500/90 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.6)] scale-105";
 
@@ -229,7 +231,7 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
                     );
                   })}
                 </div>
-                
+
                 {/* 관계 목록 */}
                 <div className="flex-1 flex flex-col gap-3">
                   <div className="text-center text-xs font-bold text-white/60 mb-1">관계</div>
@@ -237,7 +239,7 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
                     const isMatched = Object.values(matchedPairs).includes(rel);
                     const isSelected = selRel === rel;
                     let btnClass = "bg-white/10 border-white/20 text-white hover:bg-white/20";
-                    
+
                     if (isMatched) btnClass = "bg-emerald-500/30 border-emerald-500/50 text-emerald-200 opacity-60";
                     else if (isSelected) btnClass = "bg-fuchsia-500/90 border-fuchsia-400 text-white shadow-[0_0_12px_rgba(217,70,239,0.6)] scale-105";
 
@@ -269,24 +271,25 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
               <p className="font-bold text-lg mb-4 text-white text-center">
                 다음 친구의 이름은 무엇인가요?
               </p>
-              
+
               <div className="w-full aspect-square bg-black/40 rounded-xl overflow-hidden border-2 border-white/20 mb-5 flex items-center justify-center relative shadow-inner">
-                <img 
-                  src="/webdev-static-assets/stage8-friend-photo.png" 
-                  alt="Friend Photo" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const div = document.createElement('div');
-                    div.className = "flex flex-col items-center justify-center text-white/70 h-full w-full bg-white/5";
-                    div.innerHTML = "<span style='font-size: 3rem; margin-bottom: 8px;'>📸</span><span class='font-bold text-sm'>친구 사진 (준비중)</span>";
-                    e.currentTarget.parentElement?.appendChild(div);
-                  }}
-                />
+                {!imageError ? (
+                  <img
+                    src="/webdev-static-assets/stage8-borim.jpeg"
+                    alt="Friend Photo"
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-white/70 h-full w-full bg-white/5">
+                    <span style={{ fontSize: '3rem', marginBottom: '8px' }}>📸</span>
+                    <span className="font-bold text-sm">친구 사진</span>
+                  </div>
+                )}
               </div>
 
               <form onSubmit={handleQ3Submit} className="flex gap-2">
-                <input 
+                <input
                   type="text"
                   value={q3Input}
                   onChange={e => setQ3Input(e.target.value)}
@@ -304,30 +307,27 @@ export default function Stage08RecognizedPersonQuizGame({ stage, onComplete }: P
           </div>
         )}
 
-        {/* ── 클리어 화면 ── */}
-        {cleared && (
-          <div className="w-full max-w-sm flex flex-col items-center bg-black/40 p-8 rounded-3xl border-2 border-emerald-400/60 shadow-[0_0_40px_rgba(52,211,153,0.3)] backdrop-blur-md text-center animate-pop-in">
-            <div className="text-6xl mb-5 drop-shadow-lg">😎✨</div>
-            <h3 className="text-[1.35rem] font-black text-white mb-3 leading-relaxed drop-shadow-md">
-              완벽해!<br/>이제 영서 친구들 앞에서도<br/>당당한 진성이 😎
-            </h3>
-            <p className="text-sm font-bold text-emerald-300 mb-8 px-4 py-2 bg-emerald-500/20 rounded-lg">
-              🎉 영서 친구 영역 모의고사 100점!
-            </p>
-            <button className="btn-star w-full py-3 text-lg shadow-[0_4px_20px_rgba(0,0,0,0.4)]" onClick={onComplete}>
-              다음 기억으로 →
-            </button>
-          </div>
-        )}
-
         {/* ── 오답 시 깨물 캐릭터 등장 ── */}
         {showBite && (
-          <div className="fixed bottom-0 right-4 z-50 animate-slide-up pointer-events-none">
-            <img 
-              src="/webdev-static-assets/caricature-bite.png" 
-              alt="오답 깨물" 
-              className="w-32 h-32 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            />
+          <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/30 backdrop-blur-sm">
+            <div 
+              className="animate-bounce-in flex flex-col items-center card-glow p-6 text-center max-w-[280px] w-full"
+              style={{
+                background: "linear-gradient(135deg, oklch(0.98 0.01 280), oklch(0.95 0.02 280))",
+                border: "2px solid oklch(0.85 0.14 55 / 0.4)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.3), inset 0 0 20px oklch(0.85 0.14 55 / 0.1)",
+                borderRadius: "24px"
+              }}
+            >
+              <img
+                src="/webdev-static-assets/caricature-bite.png"
+                alt="오답 깨물"
+                className="w-40 h-40 object-contain filter drop-shadow-[0_4px_16px_rgba(255,100,100,0.4)] mb-3"
+              />
+              <h3 style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "1.05rem", color: "oklch(0.45 0.14 55)", fontWeight: 700, lineHeight: 1.5, wordBreak: "keep-all" }}>
+                누구인지 다시 잘 생각해봐! 😤
+              </h3>
+            </div>
           </div>
         )}
 

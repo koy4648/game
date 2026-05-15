@@ -30,8 +30,8 @@ const QUESTIONS: Question[] = [
   },
   {
     question: "영서가 가장 좋아하는 터치드 노래는?",
-    options: ["불시", "ALIVE", "달춤", "HIGHLIGHT"],
-    correctIndex: 2,
+    options: ["불시", "달춤", "ALIVE", "HIGHLIGHT"],
+    correctIndex: 1,
     correctComment: "나도 4개 중에 고르기 어려웠어 💕",
     wrongComment: "나도 4개 중에 고르기 어려웠어 😅",
   },
@@ -39,31 +39,31 @@ const QUESTIONS: Question[] = [
     question: "영서의 이상형 리스트 중 해당되지 않는 것은?",
     options: [
       "잘 웃고 웃는 게 예쁜 사람",
-      "솔직한 사람",
-      "자기주장이 강하지 않은 사람",
+      "감정 기복이 심하지 않은 사람",
+      "자기주장이 강한 사람",
       "잘 먹는 사람",
     ],
-    correctIndex: 1,
-    correctComment: "맞았어! 내 이상형 리스트에 솔직한 사람은 따로 없었어 🎯",
-    wrongComment: "아니야~ 솔직한 사람도 좋지만 이상형까지는? 😄",
+    correctIndex: 2,
+    correctComment: "맞았어~ 적당히 져주는 사람이 좋아! 🎯",
+    wrongComment: "자기 주장 강한 사람 안조아해ㅠ 😄",
   },
   {
     question: "상화가 영서에게 미리 전달해준 내용이 아닌 것은?",
     options: [
-      "교회를 다니는 사람이었으면 좋겠음",
-      "호모포비아가 아니어야 함",
-      "세종에서 일하고 싶음",
-      "클라이밍을 좋아함",
+      "상대방이 교회를 다니는 사람이었으면 좋겠음",
+      "상대방이 호모포비아가 아니어야 함",
+      "본인이 세종에서 일하고 있음",
+      "본인이 클라이밍을 좋아함",
     ],
     correctIndex: 3,
-    correctComment: "맞아! 진성이의 클라이밍 사랑은 소개팅하면서 알게 되었지? ✅",
+    correctComment: "맞아! 진성이가 클라이밍 좋아한단건 첫 날 대화하면서 알았어! ✅",
     wrongComment: "일부러 틀렸지?! 🤔",
   },
   {
     question: "다섯 가지 사랑의 언어 중 영서에게 가장 중요한 것은?",
     options: ["함께하는 시간", "선물", "봉사", "인정"],
     correctIndex: 0,
-    correctComment: "맞았어~ 함께하는 시간이 제일 소중해 🥰",
+    correctComment: "맞았어~ 함께하는 시간이 제일 소중하다고 생각해! 🥰",
     wrongComment: "함께하는 시간이 제일 중요해 💕",
   },
 ];
@@ -111,7 +111,7 @@ export default function Stage01TasteQuizGame({ stage, onComplete }: Props) {
         setGameOver(true);
         if (newAffection >= PASS_SCORE) {
           setPassed(true);
-          setTimeout(onComplete, 2500);
+          setTimeout(onComplete, 400);
         }
       }
     }, 1800);
@@ -134,10 +134,31 @@ export default function Stage01TasteQuizGame({ stage, onComplete }: Props) {
       score={affection}
       maxScore={MAX_SCORE}
       hintText="영서의 취향을 잘 파악해봐! 정답 +25점, 오답 -10점 🎯"
-      showBite={showBite && !gameOver}
-      onBiteEnd={() => setShowBite(false)}
       onRetry={handleRetry}
     >
+      {/* ── 오답 시 깨물 캐릭터 등장 ── */}
+      {showBite && !gameOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/30 backdrop-blur-sm">
+          <div 
+            className="animate-bounce-in flex flex-col items-center card-glow p-6 text-center max-w-[280px] w-full"
+            style={{
+              background: "linear-gradient(135deg, oklch(0.98 0.01 280), oklch(0.95 0.02 280))",
+              border: "2px solid oklch(0.85 0.14 55 / 0.4)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.3), inset 0 0 20px oklch(0.85 0.14 55 / 0.1)",
+              borderRadius: "24px"
+            }}
+          >
+            <img
+              src="/webdev-static-assets/caricature-bite.png"
+              alt="오답 깨물"
+              className="w-40 h-40 object-contain filter drop-shadow-[0_4px_16px_rgba(255,100,100,0.4)] mb-3"
+            />
+            <h3 style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "1.05rem", color: "oklch(0.45 0.14 55)", fontWeight: 700, lineHeight: 1.5, wordBreak: "keep-all" }}>
+              {comment || "다시 생각해봐! 😤"}
+            </h3>
+          </div>
+        </div>
+      )}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 gap-4">
         {/* 호감도 바 */}
         <div className="w-full max-w-md">
@@ -265,20 +286,7 @@ export default function Stage01TasteQuizGame({ stage, onComplete }: Props) {
           </div>
         )}
 
-        {/* 성공 팝업 */}
-        {gameOver && passed && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 animate-fade-in">
-            <div className="card-glow p-8 text-center animate-bounce-in max-w-sm mx-4">
-              <div className="text-5xl mb-3">💕</div>
-              <h2 className="text-xl font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                소개팅 성공!
-              </h2>
-              <p className="text-sm" style={{ color: "oklch(0.90 0.05 60)" }}>
-                호감도 {affection}점! 진성이가 영서 취향을 잘 알고 있었네 🥰
-              </p>
-            </div>
-          </div>
-        )}
+
       </div>
     </GameLayout>
   );
