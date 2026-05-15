@@ -3,7 +3,7 @@
  * 
  * 디자인: 핀터레스트 × 인스타그램 스토리 감성
  *   - 플레이어: 부드러운 그라디언트 원형 캐릭터
- *   - 장애물: 각 타입별로 고정된 이모지 (정신없이 바뀌지 않음)
+ *   - 장애물: 각 타입별로 고정된 이모지 
  *   - 애니메이션: 자연스럽고 부드러운 낙하 + 미세한 회전
  *   - 배경: 트렌디한 파스텔 톤 + 미니멀한 장식
  *   - 피드백: 감성적이고 세련된 메시지
@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay } from "@/components/GameOverlays";
 
 interface FallingItem {
   id: number;
@@ -64,7 +65,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
   const [completed, setCompleted] = useState(false);
   const [failed, setFailed] = useState(false);
   const [dodged, setDodged] = useState(0);
-  
+
   const idRef = useRef(0);
   const frameRef = useRef(0);
   const animRef = useRef<number>(0);
@@ -81,7 +82,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
     const isWork = Math.random() < 0.5;
     const items = isWork ? WORK_ITEMS : RIDE_ITEMS;
     const icon = items[Math.floor(Math.random() * items.length)];
-    
+
     return {
       id: idRef.current++,
       x: 15 + Math.random() * 70,  // 더 넓은 범위에서 스폰
@@ -120,7 +121,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
     completedRef.current = true;
     setCompleted(true);
     keysRef.current.clear();
-    setTimeout(onComplete, 2200);
+    setTimeout(onComplete, 400);
   }, [onComplete]);
 
   useEffect(() => {
@@ -267,42 +268,13 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
 
       <div className="flex-1 flex flex-col items-center px-4 py-2">
         {!started ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-6xl animate-bounce">🎢</div>
-            <div 
-              className="card-glow p-6 text-center max-w-sm"
-              style={{
-                background: `linear-gradient(135deg, ${EV.sky} 0%, ${EV.skyD} 100%)`,
-                border: `2px solid ${EV.rideD}`,
-                boxShadow: `0 8px 24px ${EV.shadow}`,
-              }}
-            >
-              <h2 
-                className="text-lg font-bold mb-2"
-                style={{ color: EV.rideD, fontFamily: "'Gowun Dodum', sans-serif" }}
-              >
-                에버랜드 생존 미션 ✨
-              </h2>
-              <p className="text-sm mb-4 leading-relaxed" style={{ color: EV.rideD }}>
-                회사로부터 도망치고 살아남아보자!<br />
-                사실 피해야 할 건<br />
-                회사 연락만이 아닐지도..?<br />
-                <br />
-                WASD 또는 화살표로 20초 동안 살아남아봐.
-              </p>
-              <button 
-                className="btn-star"
-                onClick={() => setStarted(true)}
-                style={{ 
-                  background: `linear-gradient(135deg, ${EV.ride}, ${EV.accent2})`,
-                  color: "#1a4d7a",
-                  boxShadow: `0 4px 12px ${EV.rideD}44`,
-                }}
-              >
-                도망치기 시작! 🏃
-              </button>
-            </div>
-          </div>
+          <GameStartOverlay
+            title="에버랜드 생존 미션 ✨"
+            description={<>회사로부터 도망치고 살아남아보자!<br />사실 피해야 할 건<br />회사 연락만이 아닐지도..?<br /><br />WASD 또는 화살표로 20초 동안 살아남아봐.</>}
+            icon="🎢"
+            onStart={() => setStarted(true)}
+            buttonText="도망치기 시작! 🏃"
+          />
         ) : (
           <>
             <div className="w-full max-w-md mb-2">
@@ -383,7 +355,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
               {items.map((item) => {
                 const bgColor = item.type === "work" ? EV.work : EV.ride;
                 const borderColor = item.type === "work" ? EV.workD : EV.rideD;
-                
+
                 return (
                   <div
                     key={item.id}
@@ -457,7 +429,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
 
             <div className="mt-3 grid grid-cols-3 gap-2 w-40 sm:hidden">
               <div />
-              <button 
+              <button
                 className="btn-star py-2"
                 onPointerDown={() => holdDirection("up", true)}
                 onPointerUp={() => holdDirection("up", false)}
@@ -467,7 +439,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
                 ↑
               </button>
               <div />
-              <button 
+              <button
                 className="btn-star py-2"
                 onPointerDown={() => holdDirection("left", true)}
                 onPointerUp={() => holdDirection("left", false)}
@@ -476,7 +448,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
               >
                 ←
               </button>
-              <button 
+              <button
                 className="btn-star py-2"
                 onPointerDown={() => holdDirection("down", true)}
                 onPointerUp={() => holdDirection("down", false)}
@@ -485,7 +457,7 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
               >
                 ↓
               </button>
-              <button 
+              <button
                 className="btn-star py-2"
                 onPointerDown={() => holdDirection("right", true)}
                 onPointerUp={() => holdDirection("right", false)}
@@ -498,35 +470,10 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
           </>
         )}
 
-        {completed && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 animate-fade-in backdrop-blur-sm">
-            <div 
-              className="card-glow p-8 text-center animate-bounce-in max-w-sm"
-              style={{
-                background: `linear-gradient(135deg, ${EV.sky} 0%, ${EV.skyD} 100%)`,
-                border: `2px solid ${EV.rideD}`,
-                boxShadow: `0 12px 32px ${EV.shadow}`,
-              }}
-            >
-              <div className="text-5xl mb-3">🎢✨</div>
-              <h2 
-                className="text-xl font-bold"
-                style={{ color: EV.rideD, fontFamily: "'Gowun Dodum', sans-serif" }}
-              >
-                20초 생존 성공! 🎉
-              </h2>
-              <p className="text-sm mt-3" style={{ color: EV.rideD }}>
-                회사 연락도, 놀이기구의 유혹도<br />
-                무사히 피했어! 정말 멋있어 💕<br />
-                다음 추억으로 가보자 🌸
-              </p>
-            </div>
-          </div>
-        )}
 
         {failed && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 animate-fade-in backdrop-blur-sm">
-            <div 
+            <div
               className="card-glow p-8 text-center animate-bounce-in max-w-sm"
               style={{
                 background: `linear-gradient(135deg, ${EV.work} 0%, ${EV.accent1} 100%)`,
@@ -535,14 +482,14 @@ export default function Stage03EverlandDodgeGame({ stage, onComplete }: Props) {
               }}
             >
               <div className="text-5xl mb-3">💥</div>
-              <h2 
+              <h2
                 className="text-xl font-bold"
                 style={{ color: EV.workD, fontFamily: "'Gowun Dodum', sans-serif" }}
               >
                 어라, 닿았어! 😅
               </h2>
               <p className="text-sm mt-3" style={{ color: EV.workD }}>
-                회사 연락이나 놀이기구에 닿았어요.<br />
+                회사 연락과 놀이기구를 피하지 못했어ㅠ<br />
                 다시 한 번 도전해볼까? 화이팅! 💪
               </p>
             </div>

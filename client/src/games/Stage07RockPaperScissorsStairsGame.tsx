@@ -20,6 +20,7 @@
 import { useState, useEffect, useRef } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay } from "@/components/GameOverlays";
 
 interface Props {
   stage: StageInfo;
@@ -274,7 +275,8 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
       setResultMessage("영서가 한 칸 올라갔어요! 🎉");
 
       if (nextYeongseoStep >= TOTAL_STEPS) {
-        setTimeout(() => setCleared(true), 900);
+        setCleared(true);
+        setTimeout(onComplete, 400);
       }
     } else {
       // 진성 승리 → 진성 전진
@@ -344,53 +346,13 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
     >
       {/* ── 시작 화면 ── */}
       {!started && (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
-          <div
-            style={{
-              background: "oklch(0.13 0.04 280 / 0.88)",
-              border: "1.5px solid oklch(0.78 0.14 55 / 0.45)",
-              borderRadius: 20,
-              padding: "32px 28px",
-              maxWidth: 360,
-              width: "100%",
-              textAlign: "center",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.45)",
-            }}
-          >
-            <div style={{ fontSize: "3rem", marginBottom: 8 }}>🏔️</div>
-            <h2
-              style={{
-                color: "oklch(0.88 0.12 55)",
-                fontFamily: "'Gowun Dodum', sans-serif",
-                fontSize: "1.3rem",
-                fontWeight: "bold",
-                marginBottom: 10,
-              }}
-            >
-              칠갑산 가위바위보
-            </h2>
-            <p
-              style={{
-                color: "oklch(0.85 0.05 60)",
-                fontFamily: "'Gowun Dodum', sans-serif",
-                fontSize: "0.9rem",
-                lineHeight: 1.7,
-                marginBottom: 20,
-              }}
-            >
-              영서가 먼저 정상에 오를 수 있도록<br />
-              <strong style={{ color: "oklch(0.88 0.14 55)" }}>눈치껏 져줘야 해!</strong><br />
-              총 5칸의 계단을 올라 정상에 도착하자.
-            </p>
-            <button
-              className="btn-star"
-              onClick={() => setStarted(true)}
-              style={{ width: "100%" }}
-            >
-              시작하기 ✊
-            </button>
-          </div>
-        </div>
+        <GameStartOverlay
+          title="칠갑산 가위바위보"
+          description={<>영서가 먼저 정상에 오를 수 있도록<br /><strong style={{ color: "oklch(0.88 0.14 55)" }}>눈치껏 져줘야 해!</strong><br />총 5칸의 계단을 올라 정상에 도착하자.</>}
+          icon="🏔️"
+          onStart={() => setStarted(true)}
+          buttonText="시작하기 ✊"
+        />
       )}
 
       {/* ── 게임 화면 ── */}
@@ -634,80 +596,7 @@ export default function Stage07RockPaperScissorsStairsGame({ stage, onComplete }
         </div>
       )}
 
-      {/* ── 클리어 화면 ── */}
-      {cleared && (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
-          <div
-            style={{
-              background: "oklch(0.13 0.04 280 / 0.92)",
-              border: "2px solid oklch(0.78 0.14 55 / 0.6)",
-              borderRadius: 24,
-              padding: "36px 28px",
-              maxWidth: 380,
-              width: "100%",
-              textAlign: "center",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 0 40px oklch(0.78 0.14 55 / 0.2)",
-              animation: "popIn 0.4s ease-out",
-            }}
-          >
-            {/* 두 캐릭터 함께 */}
-            <div className="flex items-end justify-center gap-4 mb-4">
-              <img
-                src={IMG_YEONGSEO_WIN}
-                alt="영서"
-                style={{
-                  width: "clamp(80px, 20vw, 110px)",
-                  height: "auto",
-                  objectFit: "contain",
-                  filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))",
-                }}
-              />
-              <img
-                src={IMG_JINSEONG}
-                alt="진성"
-                style={{
-                  width: "clamp(80px, 20vw, 110px)",
-                  height: "auto",
-                  objectFit: "contain",
-                  filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))",
-                }}
-              />
-            </div>
-            <div style={{ fontSize: "2rem", marginBottom: 8 }}>🏔️🎉</div>
-            <h2
-              style={{
-                color: "oklch(0.88 0.12 55)",
-                fontFamily: "'Gowun Dodum', sans-serif",
-                fontSize: "1.15rem",
-                fontWeight: "bold",
-                marginBottom: 10,
-                lineHeight: 1.6,
-              }}
-            >
-              영서와 진성이가 무사히<br />칠갑산 정상에 도착했습니다! 🎊
-            </h2>
-            <p
-              style={{
-                color: "oklch(0.80 0.05 60)",
-                fontFamily: "'Gowun Dodum', sans-serif",
-                fontSize: "0.85rem",
-                marginBottom: 24,
-                lineHeight: 1.6,
-              }}
-            >
-              힘든 등산도 함께라면 즐거워~<br />
-              다음 추억으로 이어가자!
-            </p>
-            <button
-              className="btn-star"
-              onClick={onComplete}
-              style={{ width: "100%", fontSize: "1rem" }}
-            >
-              다음 기억으로 →
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* ── 특수 팝업 오버레이 (jinseong_step == 4) ── */}
       {showSpecialPopup && (

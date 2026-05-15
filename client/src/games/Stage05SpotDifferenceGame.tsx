@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay, GameClearOverlay } from "@/components/GameOverlays";
 
 interface Props {
   stage: StageInfo;
@@ -155,7 +156,6 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
   const [stepIndex, setStepIndex] = useState(0);
   const [foundIds, setFoundIds] = useState<string[]>([]);
   const [showNextPopup, setShowNextPopup] = useState(false);
-  const [clearVisible, setClearVisible] = useState(false);
   const [miss, setMiss] = useState<{ x: number; y: number } | null>(null);
 
   const step = STEPS[stepIndex];
@@ -166,7 +166,7 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
   const foundCount = foundIds.length;
 
   const handleModifiedClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (showNextPopup || clearVisible) return;
+    if (showNextPopup) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const clickX = ((event.clientX - rect.left) / rect.width) * BASE_WIDTH;
@@ -183,14 +183,14 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
       return;
     }
 
-    // TODO: Play correct-answer sound effect here.
+
     const nextFoundIds = [...foundIds, answer.id];
     setFoundIds(nextFoundIds);
 
     if (nextFoundIds.length === step.answers.length) {
       window.setTimeout(() => {
         if (stepIndex === STEPS.length - 1) {
-          setClearVisible(true);
+          onComplete();
         } else {
           setShowNextPopup(true);
         }
@@ -209,7 +209,6 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
     setStepIndex(0);
     setFoundIds([]);
     setShowNextPopup(false);
-    setClearVisible(false);
     setMiss(null);
     setStarted(false);
   };
@@ -224,32 +223,13 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
     >
       <div className="flex-1 flex flex-col items-center px-4 py-2">
         {!started ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-6xl animate-float">🐠</div>
-            <div className="card-glow p-6 text-center max-w-sm">
-              <h2 className="text-lg font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                Stage 5: Aquarium
-              </h2>
-              <p className="text-sm mb-4 leading-relaxed" style={{ color: "oklch(0.90 0.05 60)" }}>
-                Find the differences!<br />
-                오른쪽 그림에서 다른 부분 5개를 찾아줘.
-              </p>
-              <button className="btn-star" onClick={() => setStarted(true)}>시작!</button>
-            </div>
-          </div>
-        ) : clearVisible ? (
-          <div className="flex-1 flex items-center justify-center px-4">
-            <div className="card-glow p-8 text-center max-w-sm animate-bounce-in">
-              <div className="text-5xl mb-3">🐠✨</div>
-              <h2 className="text-2xl font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                Stage 5 Clear!
-              </h2>
-              <p className="text-sm mb-5" style={{ color: "oklch(0.90 0.05 60)" }}>
-                아쿠아리움 추억찾기 성공!
-              </p>
-              <button className="btn-star" onClick={onComplete}>다음 추억으로</button>
-            </div>
-          </div>
+          <GameStartOverlay
+            title="Stage 5: Aquarium"
+            description={<>Find the differences!<br />오른쪽 그림에서 다른 부분 5개를 찾아줘.</>}
+            icon="🐠"
+            onStart={() => setStarted(true)}
+            buttonText="시작!"
+          />
         ) : (
           <div className="w-full max-w-6xl">
             <header className="mb-3 text-center">
@@ -290,18 +270,13 @@ export default function Stage05SpotDifferenceGame({ stage, onComplete }: Props) 
         )}
 
         {showNextPopup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/55 animate-fade-in">
-            <div className="card-glow p-7 text-center max-w-sm animate-bounce-in">
-              <div className="text-4xl mb-3">💙</div>
-              <h3 className="text-lg font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                Shall we move to the next memory?
-              </h3>
-              <p className="text-sm mb-5" style={{ color: "oklch(0.90 0.05 60)" }}>
-                다른 점 5개를 모두 찾았어.
-              </p>
-              <button className="btn-star" onClick={goNextStep}>Next</button>
-            </div>
-          </div>
+          <GameClearOverlay
+            title="Shall we move to the next memory?"
+            description="진성 눈썰미가 좋은걸?!"
+            icon="💙"
+            onNext={goNextStep}
+            buttonText="Next"
+          />
         )}
       </div>
     </GameLayout>
