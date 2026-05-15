@@ -18,17 +18,17 @@ interface Props {
 }
 
 type GameStatus = "idle" | "playing" | "gameover" | "step_clear" | "cleared";
-type SpawnType  = "obstacle" | "item";
+type SpawnType = "obstacle" | "item" | "super_item" | "obstacle2";
 
 interface Sprite { id: number; x: number; type: SpawnType; }
 interface FloatEffect { id: number; text: string; x: number; y: number; life: number; }
 interface Particle { id: number; x: number; y: number; vx: number; vy: number; life: number; color: string; size: number; }
 
 // ── 캔버스 해상도 (저해상도 → CSS 업스케일) ──────────────────────────────────
-const PX  = 3;    // 1도트 = 3px
-const CW  = 256;  // 캔버스 너비 (도트)
-const CH  = 88;   // 캔버스 높이 (도트)
-const GY  = 62;   // 바닥 y
+const PX = 4;    // 1도트 = 4px (게임 창 더 키우기)
+const CW = 320;  // 캔버스 너비 (도트)
+const CH = 120;   // 캔버스 높이 (도트)
+const GY = 92;   // 바닥 y
 
 const PLW = 13;   // 플레이어 너비
 const PLH = 16;   // 플레이어 높이
@@ -39,63 +39,64 @@ const OBH = 11;
 const ITW = 9;    // 아이템
 const ITH = 9;
 
-const GRAVITY  = 0.22;
-const JUMP_VY  = -5.0;
+const GRAVITY = 0.22;
+const JUMP_VY = -5.0;
 const MAX_FALL = 5.2;
 
 const STEP1_TARGET = 10000;
 const STEP2_TARGET = 42195;
-const GEL_BONUS    = 500;
-const MAX_LIVES    = 3;
+const GEL_BONUS = 500;
+const MAX_LIVES = 3;
 const INVINCIBLE_MS = 1500;
+const STAR_MS = 5000; // 무적 5초
 
 const STEP_CONFIG = {
-  1: { scrollSpeed: 1.4, spawnInterval: 92, itemChance: 0.28, scorePerFrame: 3 },
-  2: { scrollSpeed: 1.9, spawnInterval: 74, itemChance: 0.30, scorePerFrame: 4 },
+  1: { scrollSpeed: 1.6, spawnInterval: 92, itemChance: 0.28, scorePerFrame: 3 },
+  2: { scrollSpeed: 3.8, spawnInterval: 50, itemChance: 0.35, scorePerFrame: 8 },
 } as const;
 
 const IMG_YEONGSEO = "/webdev-static-assets/caricature-run-yeongseo.png";
-const IMG_JINSEONG  = "/webdev-static-assets/caricature-run-jinseong.png";
-const IMG_OBSTACLE  = "/webdev-static-assets/obstacle-bush.png";
-const IMG_GEL       = "/webdev-static-assets/item-energy-gel.png";
+const IMG_JINSEONG = "/webdev-static-assets/caricature-run-jinseong.png";
+const IMG_OBSTACLE = "/webdev-static-assets/obstacle-bush.png";
+const IMG_GEL = "/webdev-static-assets/item-energy-gel.png";
 
 // ── 슈퍼마리오 × 녹차 팔레트 ──────────────────────────────────────────────────
 const P = {
   // 하늘 (마리오 스타일)
-  skyT:  "#4a90e2",  // 진한 파란 상단
-  skyB:  "#87ceeb",  // 밝은 파란 하단
+  skyT: "#4a90e2",  // 진한 파란 상단
+  skyB: "#87ceeb",  // 밝은 파란 하단
   cloud: "#ffffff",
-  cloudS:"#e0f0ff",
+  cloudS: "#e0f0ff",
   // 녹차 산 (마리오 산 스타일)
-  mtn1:  "#2d5016",  // 진한 녹차
-  mtn2:  "#4a7c2c",  // 중간 녹차
-  mtn3:  "#6ba547",  // 밝은 녹차
+  mtn1: "#2d5016",  // 진한 녹차
+  mtn2: "#4a7c2c",  // 중간 녹차
+  mtn3: "#6ba547",  // 밝은 녹차
   // 블록 (마리오 블록 스타일)
   block1: "#6ba547", // 녹차 블록
   block2: "#4a7c2c", // 어두운 녹차
   block3: "#8bc34a", // 밝은 녹차
-  blockHL:"#a5d6a7", // 블록 하이라이트
+  blockHL: "#a5d6a7", // 블록 하이라이트
   // 파이프 (마리오 파이프 → 녹차 파이프)
-  pipe:  "#2d5016",
-  pipeHL:"#4a7c2c",
+  pipe: "#2d5016",
+  pipeHL: "#4a7c2c",
   // 적 (마리오 Goomba → 녹차 벌레)
   enemy1: "#8b4513", // 갈색 벌레
   enemy2: "#a0522d",
   // 동전 (마리오 동전 → 녹차 잎)
-  coin:  "#ffd700",
-  coinHL:"#ffed4e",
+  coin: "#ffd700",
+  coinHL: "#ffed4e",
   // UI
-  uiBg:  "#f0faf0",
-  uiBd:  "#66bb6a",
+  uiBg: "#f0faf0",
+  uiBd: "#66bb6a",
   uiTxt: "#2e7d32",
-  uiGold:"#f9a825",
-  uiPink:"#f06292",
-  uiBlue:"#42a5f5",
+  uiGold: "#f9a825",
+  uiPink: "#f06292",
+  uiBlue: "#42a5f5",
   uiRed: "#ef5350",
   // 기타
   white: "#ffffff",
   black: "#333333",
-  shadow:"rgba(0,0,0,0.12)",
+  shadow: "rgba(0,0,0,0.12)",
 };
 
 // ── 도트 헬퍼 ────────────────────────────────────────────────────────────────
@@ -130,24 +131,24 @@ function drawSky(ctx: CanvasRenderingContext2D) {
 
 // 2. 마리오 스타일 구름 (눈 달린 구름)
 const CLOUDS = [
-  { ox: 20,  y: 8,  w: 20, h: 6,  speed: 0.12 },
-  { ox: 90,  y: 12, w: 16, h: 5,  speed: 0.09 },
-  { ox: 150, y: 6,  w: 24, h: 7,  speed: 0.14 },
-  { ox: 220, y: 14, w: 14, h: 4,  speed: 0.10 },
+  { ox: 20, y: 8, w: 20, h: 6, speed: 0.12 },
+  { ox: 90, y: 12, w: 16, h: 5, speed: 0.09 },
+  { ox: 150, y: 6, w: 24, h: 7, speed: 0.14 },
+  { ox: 220, y: 14, w: 14, h: 4, speed: 0.10 },
 ];
 
 function drawClouds(ctx: CanvasRenderingContext2D, frame: number) {
   for (const cl of CLOUDS) {
     const cx = ((cl.ox + frame * cl.speed) % (CW + cl.w + 10));
-    const x  = cx > CW + 5 ? cx - CW - cl.w - 10 : cx;
-    
+    const x = cx > CW + 5 ? cx - CW - cl.w - 10 : cx;
+
     // 구름 몸통
     dot(ctx, x + 1, cl.y + 2, P.cloud, cl.w - 2, cl.h - 2);
-    dot(ctx, x,     cl.y + 1, P.cloud, cl.w, cl.h - 1);
-    
+    dot(ctx, x, cl.y + 1, P.cloud, cl.w, cl.h - 1);
+
     // 구름 음영
     dot(ctx, x + 1, cl.y + 2, P.cloudS, cl.w - 2, 1);
-    
+
     // 눈 (마리오 스타일)
     dot(ctx, x + 3, cl.y, P.black, 2, 2);
     dot(ctx, x + cl.w - 5, cl.y, P.black, 2, 2);
@@ -161,7 +162,7 @@ function drawMountains(ctx: CanvasRenderingContext2D, off: number) {
   const mtnY = GY - 22;
   const pattern = 32;
   const offset = Math.round(off * 0.18) % pattern;
-  
+
   // 산 프로필 (톱니 모양)
   for (let x = 0; x < CW; x++) {
     const px = (x + offset) % pattern;
@@ -170,7 +171,7 @@ function drawMountains(ctx: CanvasRenderingContext2D, off: number) {
     else if (px < 16) h = 16 - px;
     else if (px < 24) h = px - 16;
     else h = 32 - px;
-    
+
     const topY = mtnY - h;
     dot(ctx, x, topY, P.mtn1, 1, h);
     dot(ctx, x, topY, P.mtn2, 1, 1);
@@ -181,13 +182,13 @@ function drawMountains(ctx: CanvasRenderingContext2D, off: number) {
 function drawBlockPlatforms(ctx: CanvasRenderingContext2D, off: number) {
   const blockSize = 8;
   const offset = Math.round(off * 0.35) % (blockSize * 3);
-  
+
   // 중간 플랫폼들
   const platforms = [
     { y: GY - 28, start: 0, length: 40 },
     { y: GY - 18, start: 60, length: 50 },
   ];
-  
+
   for (const platform of platforms) {
     for (let x = -offset; x < CW + blockSize; x += blockSize) {
       if (x + blockSize > platform.start && x < platform.start + platform.length) {
@@ -206,55 +207,77 @@ function drawTeaField(ctx: CanvasRenderingContext2D, off: number) {
   dot(ctx, 0, GY, P.block1, CW, 4);
   dot(ctx, 0, GY, P.block2, CW, 1);
   dot(ctx, 0, GY + 1, P.blockHL, CW, 1);
-  
+
   // 블록 패턴 (마리오 스타일)
   const blockSize = 8;
   const offset = Math.round(off) % blockSize;
-  
+
   for (let x = -offset; x < CW; x += blockSize) {
     dot(ctx, x, GY + 2, P.block2, 1, 2);
     dot(ctx, x + blockSize - 1, GY + 2, P.block2, 1, 2);
   }
-  
+
   // 배경 녹차밭
   dot(ctx, 0, GY + 4, P.mtn3, CW, CH - GY - 4);
 }
 
 // 6. 장애물 (마리오 Goomba → 녹차 벌레)
-function drawObstacle(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null) {
-  const y = GY - OBH;
-  if (img) {
+function drawObstacle(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null, type: SpawnType) {
+  const isObstacle2 = type === "obstacle2";
+  const y = isObstacle2 ? GY - OBH - 6 : GY - OBH;
+  if (img && !isObstacle2) {
     ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, x, y, OBW, OBH);
     ctx.restore(); return;
   }
-  
-  // 마리오 Goomba 스타일 (녹차 벌레)
-  // 몸통
-  dot(ctx, x + 1, y + 2, P.enemy1, 9, 8);
-  dot(ctx, x,     y + 3, P.enemy1, 11, 6);
-  dot(ctx, x + 1, y + 2, P.enemy2, 9, 1);
-  
-  // 눈
-  dot(ctx, x + 2, y + 4, P.white, 2, 2);
-  dot(ctx, x + 7, y + 4, P.white, 2, 2);
-  dot(ctx, x + 2, y + 4, P.black, 1, 1);
-  dot(ctx, x + 7, y + 4, P.black, 1, 1);
-  
+
+  if (isObstacle2) {
+    // 거북이 등껍질 (파란색)
+    dot(ctx, x+2, y+4, "#0055aa", 7, 6);
+    dot(ctx, x+1, y+5, "#0055aa", 9, 5);
+    dot(ctx, x+2, y+4, "#88ccff", 3, 2); // 반짝임
+    dot(ctx, x, y+8, "#ffcc99", 11, 2); // 얼굴/발
+    dot(ctx, x+1, y+9, P.black, 1, 1); // 눈
+  } else {
+    // 마리오 Goomba 스타일 (녹차 벌레)
+    dot(ctx, x + 1, y + 2, P.enemy1, 9, 8);
+    dot(ctx, x, y + 3, P.enemy1, 11, 6);
+    dot(ctx, x + 1, y + 2, P.enemy2, 9, 1);
+    dot(ctx, x + 2, y + 4, P.white, 2, 2);
+    dot(ctx, x + 7, y + 4, P.white, 2, 2);
+    dot(ctx, x + 2, y + 4, P.black, 1, 1);
+    dot(ctx, x + 7, y + 4, P.black, 1, 1);
+  }
+
   // 그림자
   dot(ctx, x + 1, GY, P.shadow, 9, 1);
 }
 
-// 7. 아이템 (마리오 동전 → 녹차 잎)
-function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null, frame: number) {
+// 7. 아이템 (마리오 동전 → 녹차 잎 또는 슈퍼 스타)
+function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement | null, frame: number, type: SpawnType) {
   const bob = Math.round(Math.sin(frame * 0.14) * 1.5);
-  const y   = GY - ITH - 4 + bob;
+  const y = GY - ITH - 4 + bob;
+  const isStar = type === "super_item";
+
+  if (isStar) {
+    // 슈퍼 스타 마리오 스타일 (반짝이는 별)
+    const color = (Math.floor(frame / 4) % 2 === 0) ? "#ffff00" : "#ffaa00";
+    dot(ctx, x+4, y, color, 3, 11);
+    dot(ctx, x, y+4, color, 11, 3);
+    dot(ctx, x+1, y+2, color, 9, 7);
+    dot(ctx, x+2, y+1, color, 7, 9);
+    // 눈
+    dot(ctx, x+3, y+4, P.black, 1, 2);
+    dot(ctx, x+7, y+4, P.black, 1, 2);
+    return;
+  }
+
   if (img) {
     ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, x, y, ITW, ITH);
     ctx.restore(); return;
   }
-  
+
   // 마리오 동전 스타일 (녹차 잎)
   // 동전 테두리
   dot(ctx, x + 2, y, P.coin, 5, 1);
@@ -262,15 +285,15 @@ function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement
   dot(ctx, x, y + 2, P.coin, 9, 5);
   dot(ctx, x + 1, y + 7, P.coin, 7, 1);
   dot(ctx, x + 2, y + 8, P.coin, 5, 1);
-  
+
   // 동전 내부
   dot(ctx, x + 2, y + 1, P.coinHL, 5, 1);
   dot(ctx, x + 2, y + 2, P.coinHL, 5, 4);
-  
+
   // 잎 모양 (녹차 테마)
   dot(ctx, x + 4, y + 3, P.mtn1, 1, 3);
   dot(ctx, x + 3, y + 4, P.mtn1, 3, 1);
-  
+
   // 반짝임
   if (Math.floor(frame * 0.2) % 3 === 0) {
     dot(ctx, x + 3, y + 2, P.white, 1, 1);
@@ -281,8 +304,11 @@ function drawGel(ctx: CanvasRenderingContext2D, x: number, img: HTMLImageElement
 function drawPlayer(
   ctx: CanvasRenderingContext2D,
   py: number, img: HTMLImageElement | null,
-  frame: number, isStep2: boolean, grounded: boolean
+  frame: number, isStep2: boolean, grounded: boolean,
+  invincible: boolean, starMode: boolean
 ) {
+  if (invincible && !starMode && Math.floor(frame / 4) % 2 === 0) return;
+
   if (img) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -294,47 +320,54 @@ function drawPlayer(
   }
 
   // 마리오 스타일 도트 캐릭터
-  const legF   = Math.floor(frame / 7) % 4;
-  const bodyC  = isStep2 ? "#0066cc" : "#ff0000";  // 파란색 / 빨간색
-  const skinC  = "#ffcc99";
-  const hairC  = isStep2 ? "#333333" : "#8b4513";  // 검은색 / 갈색
-  const shoeC  = "#333333";
-  const gloveC = "#ffff00";  // 노란 장갑
+  const legF = Math.floor(frame / 7) % 4;
+  let bodyC = isStep2 ? "#0066cc" : "#ff0000";  // 파란색 / 빨간색
+  let skinC = "#ffcc99";
+  let hairC = isStep2 ? "#333333" : "#8b4513";  // 검은색 / 갈색
+  let shoeC = "#333333";
+  let gloveC = "#ffff00";  // 노란 장갑
+
+  if (starMode) {
+    const hue = (frame * 15) % 360;
+    bodyC = `hsl(${hue}, 100%, 50%)`;
+    skinC = `hsl(${(hue + 60) % 360}, 100%, 70%)`;
+    hairC = `hsl(${(hue + 120) % 360}, 100%, 50%)`;
+  }
 
   // 그림자
   if (grounded) {
     dot(ctx, PLX + 1, GY + 1, P.shadow, PLW - 2, 1);
   }
-  
+
   // 머리
-  dot(ctx, PLX + 3, py,      skinC, 7, 6);
-  dot(ctx, PLX + 2, py + 1,  skinC, 9, 4);
-  
+  dot(ctx, PLX + 3, py, skinC, 7, 6);
+  dot(ctx, PLX + 2, py + 1, skinC, 9, 4);
+
   // 머리카락
-  dot(ctx, PLX + 3, py,      hairC, 7, 2);
-  dot(ctx, PLX + 2, py + 1,  hairC, 2, 2);
-  dot(ctx, PLX + 9, py + 1,  hairC, 2, 2);
-  
+  dot(ctx, PLX + 3, py, hairC, 7, 2);
+  dot(ctx, PLX + 2, py + 1, hairC, 2, 2);
+  dot(ctx, PLX + 9, py + 1, hairC, 2, 2);
+
   // 눈
-  dot(ctx, PLX + 4, py + 2,  P.black, 1, 2);
-  dot(ctx, PLX + 8, py + 2,  P.black, 1, 2);
-  dot(ctx, PLX + 4, py + 2,  P.white, 1, 1);
-  dot(ctx, PLX + 8, py + 2,  P.white, 1, 1);
-  
+  dot(ctx, PLX + 4, py + 2, P.black, 1, 2);
+  dot(ctx, PLX + 8, py + 2, P.black, 1, 2);
+  dot(ctx, PLX + 4, py + 2, P.white, 1, 1);
+  dot(ctx, PLX + 8, py + 2, P.white, 1, 1);
+
   // 입
-  dot(ctx, PLX + 5, py + 4,  P.black, 3, 1);
-  
+  dot(ctx, PLX + 5, py + 4, P.black, 3, 1);
+
   // 몸통
-  dot(ctx, PLX + 2, py + 6,  bodyC, 9, 5);
-  dot(ctx, PLX + 3, py + 7,  bodyC, 7, 3);
-  
+  dot(ctx, PLX + 2, py + 6, bodyC, 9, 5);
+  dot(ctx, PLX + 3, py + 7, bodyC, 7, 3);
+
   // 장갑 (팔)
   const armSwing = legF < 2 ? 1 : -1;
-  dot(ctx, PLX, py + 7 + armSwing,  gloveC, 2, 2);
+  dot(ctx, PLX, py + 7 + armSwing, gloveC, 2, 2);
   dot(ctx, PLX + 11, py + 7 - armSwing, gloveC, 2, 2);
-  dot(ctx, PLX + 1, py + 8 + armSwing,  bodyC, 1, 1);
+  dot(ctx, PLX + 1, py + 8 + armSwing, bodyC, 1, 1);
   dot(ctx, PLX + 12, py + 8 - armSwing, bodyC, 1, 1);
-  
+
   // 다리
   if (grounded) {
     if (legF === 0) {
@@ -396,6 +429,8 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
   const livesRef = useRef(MAX_LIVES);
   const invincibleRef = useRef(false);
   const invTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const starModeRef = useRef(false);
+  const starTimerRef = useRef<NodeJS.Timeout | null>(null);
   const rafRef = useRef<number>(0);
   const frameRef = useRef(0);
   const spriteIdRef = useRef(0);
@@ -439,10 +474,10 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [jump]);
 
-  const triggerInvincible = useCallback(() => {
-    invincibleRef.current = true;
-    if (invTimerRef.current) clearTimeout(invTimerRef.current);
-    invTimerRef.current = setTimeout(() => { invincibleRef.current = false; }, INVINCIBLE_MS);
+  const triggerStar = useCallback(() => {
+    starModeRef.current = true;
+    if (starTimerRef.current) clearTimeout(starTimerRef.current);
+    starTimerRef.current = setTimeout(() => { starModeRef.current = false; }, STAR_MS);
   }, []);
 
   const spawnLeaves = useCallback((x: number, y: number) => {
@@ -475,9 +510,14 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
 
     scoreRef.current = Math.min(scoreRef.current + cfg.scorePerFrame, target);
     if (scoreRef.current >= target) {
-      statusRef.current = stepRef.current === 1 ? "step_clear" : "cleared";
-      setScore(target); setStatus(statusRef.current);
-      cancelAnimationFrame(rafRef.current); return;
+      if (stepRef.current === 1) {
+        statusRef.current = "step_clear";
+        setScore(target); setStatus("step_clear");
+        cancelAnimationFrame(rafRef.current); return;
+      } else {
+        cancelAnimationFrame(rafRef.current);
+        onComplete(); return;
+      }
     }
 
     if (!groundedRef.current) {
@@ -490,17 +530,29 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
       }
     }
 
-    groundOffRef.current += cfg.scrollSpeed;
-    hillOffRef.current += cfg.scrollSpeed;
+    const currentSpeed = starModeRef.current ? cfg.scrollSpeed * 1.8 : cfg.scrollSpeed;
+    groundOffRef.current += currentSpeed;
+    hillOffRef.current += currentSpeed;
 
     spritesRef.current = spritesRef.current
-      .map((s) => ({ ...s, x: s.x - cfg.scrollSpeed }))
+      .map((s) => ({ ...s, x: s.x - currentSpeed }))
       .filter((s) => s.x > -OBW - 4);
-    if (fc % cfg.spawnInterval === 0) {
+
+    if (fc % Math.floor(cfg.spawnInterval / (starModeRef.current ? 1.5 : 1)) === 0) {
+      const isStep2 = stepRef.current === 2;
+      let type: SpawnType = "obstacle";
+      const rand = Math.random();
+      if (rand < cfg.itemChance) {
+        if (isStep2 && Math.random() < 0.15) type = "super_item";
+        else type = "item";
+      } else {
+        if (isStep2 && Math.random() < 0.35) type = "obstacle2";
+        else type = "obstacle";
+      }
       spritesRef.current.push({
         id: spriteIdRef.current++,
         x: CW + 4,
-        type: Math.random() < cfg.itemChance ? "item" : "obstacle",
+        type,
       });
     }
 
@@ -508,25 +560,42 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     for (let i = spritesRef.current.length - 1; i >= 0; i--) {
       const s = spritesRef.current[i];
       if (s.x > CW) continue;
-      if (s.type === "obstacle") {
-        const oy = GY - OBH;
-        if (!invincibleRef.current && isColliding(PLX, py, PLW, PLH, s.x, oy, OBW, OBH)) {
-          livesRef.current--;
-          setLives(livesRef.current);
-          spritesRef.current.splice(i, 1);
-          triggerInvincible();
-          spawnLeaves(s.x + OBW / 2, oy);
-          if (livesRef.current <= 0) {
-            statusRef.current = "gameover"; setStatus("gameover");
-            cancelAnimationFrame(rafRef.current); return;
+      
+      if (s.type === "obstacle" || s.type === "obstacle2") {
+        const isObstacle2 = s.type === "obstacle2";
+        const oy = isObstacle2 ? GY - OBH - 6 : GY - OBH;
+        
+        if (isColliding(PLX, py, PLW, PLH, s.x, oy, OBW, OBH)) {
+          if (starModeRef.current) {
+            // 별 먹은 상태면 장애물 파괴 & 보너스 점수
+            scoreRef.current = Math.min(scoreRef.current + 300, target);
+            spritesRef.current.splice(i, 1);
+            effectsRef.current.push({ id: effectIdRef.current++, text: "KICK! +300", x: s.x, y: oy - 10, life: 40 });
+            spawnLeaves(s.x + OBW / 2, oy);
+          } else if (!invincibleRef.current) {
+            // 맞음
+            livesRef.current--;
+            setLives(livesRef.current);
+            spritesRef.current.splice(i, 1);
+            triggerInvincible();
+            spawnLeaves(s.x + OBW / 2, oy);
+            if (livesRef.current <= 0) {
+              statusRef.current = "gameover"; setStatus("gameover");
+              cancelAnimationFrame(rafRef.current); return;
+            }
           }
         }
-      } else {
+      } else if (s.type === "item" || s.type === "super_item") {
         const iy = GY - ITH - 4;
         if (isColliding(PLX, py, PLW, PLH, s.x, iy, ITW, ITH, 1)) {
-          scoreRef.current = Math.min(scoreRef.current + GEL_BONUS, target);
+          if (s.type === "super_item") {
+            triggerStar();
+            effectsRef.current.push({ id: effectIdRef.current++, text: "SUPER STAR!", x: PLX, y: py - 10, life: 60 });
+          } else {
+            scoreRef.current = Math.min(scoreRef.current + GEL_BONUS, target);
+            effectsRef.current.push({ id: effectIdRef.current++, text: "+0.5km ★", x: PLX + PLW / 2, y: py - 2, life: 45 });
+          }
           spritesRef.current.splice(i, 1);
-          effectsRef.current.push({ id: effectIdRef.current++, text: "+0.5km ★", x: PLX + PLW / 2, y: py - 2, life: 45 });
           spawnLeaves(s.x + ITW / 2, iy);
         }
       }
@@ -559,11 +628,12 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     }
     ctx.globalAlpha = 1;
 
-    const blinkOn = invincibleRef.current && Math.floor(fc / 4) % 2 === 0;
-    if (!blinkOn) {
-      const pImg = imgsRef.current[stepRef.current === 1 ? IMG_YEONGSEO : IMG_JINSEONG];
-      drawPlayer(ctx, Math.round(playerYRef.current), pImg, fc, stepRef.current === 2, groundedRef.current);
-    }
+    const pImg = imgsRef.current[stepRef.current === 1 ? IMG_YEONGSEO : IMG_JINSEONG];
+    drawPlayer(
+      ctx, Math.round(playerYRef.current), pImg,
+      fc, stepRef.current === 2, groundedRef.current,
+      invincibleRef.current, starModeRef.current
+    );
 
     for (const ef of effectsRef.current) {
       ctx.globalAlpha = ef.life / 45;
@@ -597,7 +667,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
     if (invTimerRef.current) clearTimeout(invTimerRef.current);
   }, []);
 
-  const isPlaying = ["playing","gameover","step_clear","cleared"].includes(status);
+  const isPlaying = ["playing", "gameover", "step_clear", "cleared"].includes(status);
   const target = step === 1 ? STEP1_TARGET : STEP2_TARGET;
   const pct = Math.min(100, Math.round((score / target) * 100));
 
@@ -677,7 +747,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
               </div>
 
               <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 12 }}>
-                {["#ff0000","#ffd700","#6ba547","#0066cc","#c8e6c9"].map((c,i) => (
+                {["#ff0000", "#ffd700", "#6ba547", "#0066cc", "#c8e6c9"].map((c, i) => (
                   <div key={i} style={{ width: 5, height: 5, background: c, borderRadius: 0 }} />
                 ))}
               </div>
@@ -870,33 +940,7 @@ export default function Stage11DinoRunGame({ stage, onComplete }: Props) {
                 </div>
               )}
 
-              {status === "cleared" && (
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,250,240,0.82)" }}>
-                  <div style={{ ...popupBase, boxShadow: "4px 4px 0 #ffd700, 8px 8px 0 #ffed4e" }}>
-                    <div style={{ fontSize: "0.52rem", color: "#ffd700", marginBottom: 6, animation: "s11-sparkle 0.8s infinite" }}>
-                      ★ MARATHON CLEAR ★
-                    </div>
-                    <div style={{ height: 2, background: "repeating-linear-gradient(90deg,#ff0000 0 4px,#ffd700 4px 8px,#6ba547 8px 12px,#0066cc 12px 16px)", marginBottom: 10 }} />
-                    <div style={{ fontSize: "0.44rem", color: "#333", lineHeight: 2.4, marginBottom: 16 }}>
-                      52.195km 완주 성공!<br />
-                      <span style={{ color: "#ff0000" }}>우리의 첫 마라톤 클리어</span><br />
-                      <span style={{ fontSize: "0.40rem", color: "#ffd700" }}>🥇 CONGRATULATIONS 🥇</span>
-                    </div>
-                    <button
-                      className="s11-btn"
-                      onClick={(e) => { e.stopPropagation(); handleFinalClear(); }}
-                      style={{
-                        background: "#ffd700",
-                        color: "#333", border: "none", padding: "11px 20px",
-                        fontSize: "0.50rem", boxShadow: "3px 3px 0 #ffed4e",
-                        width: "100%", ...pxFont, letterSpacing: "0.04em",
-                      }}
-                    >
-                      ▶ NEXT STAGE
-                    </button>
-                  </div>
-                </div>
-              )}
+
             </div>
 
             {status === "playing" && (
