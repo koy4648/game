@@ -137,16 +137,20 @@ export default function StagePage() {
             boxShadow: "0 0 60px oklch(0.78 0.14 55 / 0.3), 0 16px 48px rgba(0,0,0,0.5)",
             transform: caricatureVisible ? "scale(1)" : "scale(0.8)",
             transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            maxWidth: 300,
+            maxWidth: 320,
+            width: "100%",
           }}>
-            <div style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "1.05rem", color: "oklch(0.78 0.14 55)", fontWeight: 700 }}>
-              ✨ {stage.name} 클리어! ✨
+            <div className="text-4xl">{stage.emoji}</div>
+            <div style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "1.3rem", color: "oklch(0.85 0.14 55)", fontWeight: 700, textAlign: "center" }}>
+              {stage.outroTitle}
             </div>
             <div style={{ width: 150, height: 150, borderRadius: "50%", overflow: "hidden", border: "3px solid oklch(0.78 0.14 55 / 0.9)", boxShadow: "0 0 24px oklch(0.78 0.14 55 / 0.5)", background: "oklch(0.18 0.05 275)" }}>
               <img src={stage.caricature} alt={stage.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
-            <div style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: "0.82rem", color: "oklch(0.72 0.12 350)" }}>{stage.date} 💌</div>
-            <div style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "0.75rem", color: "oklch(0.50 0.05 280)" }}>잠시 후 지도로 돌아갑니다...</div>
+            <div style={{ fontFamily: "'Gowun Dodum', sans-serif", fontSize: "1rem", color: "oklch(0.95 0.05 60)", lineHeight: 1.6, textAlign: "center", whiteSpace: "pre-wrap", wordBreak: "keep-all" }}>
+              {stage.outroDescription}
+            </div>
+            <div style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: "0.75rem", color: "oklch(0.72 0.12 350)", marginTop: 8 }}>{stage.date} 💌 잠시 후 지도로 돌아갑니다...</div>
           </div>
         </div>
       )}
@@ -240,7 +244,7 @@ function StageIntro({ stage, onStart }: { stage: (typeof STAGES)[0]; onStart: ()
           {stage.date} · {stage.description}
         </p>
         <p
-          className="text-xl leading-relaxed font-bold mb-7"
+          className="text-xl leading-relaxed font-bold mb-7 break-keep"
           style={{
             textWrap: "balance",
             textShadow: "0 2px 18px rgba(0,0,0,0.45)",

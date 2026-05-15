@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay } from "@/components/GameOverlays";
 
 interface Props {
   stage: StageInfo;
@@ -191,17 +192,13 @@ export default function Stage06PohangScratchGame({ stage, onComplete }: Props) {
     >
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-3">
         {!started ? (
-          <div className="card-glow p-7 text-center max-w-sm">
-            <div className="text-5xl mb-3">🌊</div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: "oklch(0.82 0.11 210)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-              포항 바다 스크래치
-            </h2>
-            <p className="text-sm leading-relaxed mb-5" style={{ color: "oklch(0.92 0.04 75)" }}>
-              은빛 막을 살살 긁어서<br />
-              바다 앞 추억을 다시 보여줘.
-            </p>
-            <button className="btn-star" onClick={() => setStarted(true)}>시작!</button>
-          </div>
+          <GameStartOverlay
+            title="포항 바다 스크래치"
+            description={<>복권을 살살 긁어서<br />바다 앞 추억을 다시 보여줘.</>}
+            icon="🌊"
+            onStart={() => setStarted(true)}
+            buttonText="시작!"
+          />
         ) : (
           <div className="w-full max-w-5xl flex flex-col items-center gap-3">
             <div
@@ -281,8 +278,8 @@ export default function Stage06PohangScratchGame({ stage, onComplete }: Props) {
             </div>
 
             {cleared && (
-              <button className="btn-star animate-bounce-in" onClick={onComplete}>
-                Next Stage
+              <button className="btn-star animate-bounce-in mt-4" onClick={onComplete}>
+                추억 확인하기 💕
               </button>
             )}
           </div>

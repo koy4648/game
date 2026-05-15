@@ -14,7 +14,7 @@ export default function GuideBear({ message, onClose, hintMode = false }: GuideB
         style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }}
       />
       <div
-        className="relative px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed flex-1"
+        className="relative px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed flex-1 break-keep"
         style={{
           background: "oklch(0.95 0.01 60)",
           color: "oklch(0.20 0.04 280)",

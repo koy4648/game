@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StageInfo } from "@/contexts/GameContext";
 import GameLayout from "./GameLayout";
+import { GameStartOverlay } from "@/components/GameOverlays";
 
 interface Props {
   stage: StageInfo;
@@ -20,7 +21,7 @@ const JEJU_IMAGE = "/webdev-static-assets/stage4-jeju-puzzle.png";
 const JEJU_ORIGINAL_IMAGE = "/webdev-static-assets/stage4-orig.jpg";
 
 export default function Stage04PuzzleGame({ stage, onComplete }: Props) {
-  return <JejuFreePuzzle stage={stage} onComplete={onComplete} />; 
+  return <JejuFreePuzzle stage={stage} onComplete={onComplete} />;
 }
 
 function createJejuPieces() {
@@ -169,19 +170,13 @@ function JejuFreePuzzle({ stage, onComplete }: Props) {
     >
       <div className="flex-1 flex flex-col items-center px-4 py-2">
         {!started ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-6xl animate-float">🍊</div>
-            <div className="card-glow p-6 text-center max-w-sm">
-              <h2 className="text-lg font-bold mb-2" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                제주도 4x4 퍼즐!
-              </h2>
-              <p className="text-sm mb-4 leading-relaxed" style={{ color: "oklch(0.90 0.05 60)" }}>
-                우리의 첫 여행 베스트 컷을<br />
-                16조각으로 다시 맞춰보자 🧩
-              </p>
-              <button className="btn-star" onClick={startPuzzle}>퍼즐 시작!</button>
-            </div>
-          </div>
+          <GameStartOverlay
+            title="제주도 4x4 퍼즐!"
+            description={<>우리의 첫 여행 베스트 컷을<br />16조각으로 다시 맞춰보자 🧩</>}
+            icon="🍊"
+            onStart={startPuzzle}
+            buttonText="퍼즐 시작!"
+          />
         ) : (
           <div className="flex flex-col items-center gap-3 w-full max-w-md">
             <div className="flex items-center justify-between w-full text-xs" style={{ color: "oklch(0.70 0.05 280)" }}>
@@ -255,7 +250,7 @@ function JejuFreePuzzle({ stage, onComplete }: Props) {
 
             <div className="flex items-center gap-3">
               <p className="text-xs text-center" style={{ color: "oklch(0.70 0.05 280)" }}>
-                맞는 위치 가까이에 놓으면 자동으로 스냅돼요.
+                맞는 위치 가까이에 놓으면 자동으로 스냅된다!
               </p>
               <button className="text-xs underline" style={{ color: "oklch(0.78 0.14 55)" }} onClick={resetPuzzle}>
                 다시 섞기
@@ -264,19 +259,6 @@ function JejuFreePuzzle({ stage, onComplete }: Props) {
           </div>
         )}
 
-        {completed && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 animate-fade-in">
-            <div className="card-glow p-8 text-center animate-bounce-in max-w-sm">
-              <div className="text-5xl mb-3">🍊🧩</div>
-              <h2 className="text-xl font-bold" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                제주도 퍼즐 완성!
-              </h2>
-              <p className="text-sm mt-2" style={{ color: "oklch(0.90 0.05 60)" }}>
-                첫 여행의 마지막 순간! 피곤했지만 정말 즐거웠지? 💕
-              </p>
-            </div>
-          </div>
-        )}
 
         {previewVisible && (
           <div

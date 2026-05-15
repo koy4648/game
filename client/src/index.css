@@ -69,6 +69,7 @@
     @apply bg-background text-foreground;
     font-family: 'Noto Sans KR', sans-serif;
     overflow-x: hidden;
+    word-break: keep-all;
   }
   h1, h2, h3 {
     font-family: 'Gowun Dodum', 'Noto Sans KR', sans-serif;

@@ -79,7 +79,7 @@ export default function Stage12BaseballGame({ stage, onComplete }: Props) {
         const nh = h + 1;
         if (nh >= GOAL_HOMERUNS) {
           setCompleted(true);
-          setTimeout(onComplete, 2500);
+          setTimeout(onComplete, 400);
         }
         return nh;
       });
@@ -227,17 +227,7 @@ export default function Stage12BaseballGame({ stage, onComplete }: Props) {
           </>
         )}
 
-        {completed && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 animate-fade-in">
-            <div className="card-glow p-8 text-center animate-bounce-in max-w-sm">
-              <div className="text-5xl mb-3">⚾🏆</div>
-              <h2 className="text-xl font-bold" style={{ color: "oklch(0.78 0.14 55)", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                홈런 {GOAL_HOMERUNS}개 달성!
-              </h2>
-              <p className="text-sm mt-2" style={{ color: "oklch(0.90 0.05 60)" }}>두산 파이팅! 이제 마지막 미션이야 💕</p>
-            </div>
-          </div>
-        )}
+
         {gameOver && !completed && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 animate-fade-in">
             <div className="card-glow p-8 text-center animate-bounce-in max-w-sm">

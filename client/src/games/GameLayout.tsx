@@ -38,18 +38,11 @@ export default function GameLayout({
   const [showRetry, setShowRetry] = useState(false);
   const prevBiteRef = useRef(false);
 
-  // showBite가 false→true로 바뀔 때 깨물 이미지 표시
+  // showBite가 false→true로 바뀔 때 바로 다시 도전 모달 표시
   useEffect(() => {
     if (showBite && !prevBiteRef.current) {
-      setBiteVisible(true);
-      setShowRetry(false);
-      // 1.2초 후 깨물 이미지 사라지고 다시 도전 버튼 표시
-      const t1 = setTimeout(() => {
-        setBiteVisible(false);
-        setShowRetry(true);
-        onBiteEnd?.();
-      }, 1200);
-      return () => clearTimeout(t1);
+      setShowRetry(true);
+      onBiteEnd?.();
     }
     if (!showBite) {
       setShowRetry(false);
@@ -160,48 +153,7 @@ export default function GameLayout({
           />
         </div>
       )}
-      {/* 깨물 리액션 오버레이 */}
-      {biteVisible && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "oklch(0.05 0.02 280 / 0.7)", pointerEvents: "none" }}
-        >
-          <div
-            style={{
-              animation: "biteIn 0.3s ease-out",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            <img
-              src={BITE_IMG}
-              alt="깨물!"
-              style={{
-                width: "clamp(180px, 45vw, 300px)",
-                height: "auto",
-                objectFit: "contain",
-                filter: "drop-shadow(0 0 30px rgba(255,60,60,0.8))",
-              }}
-            />
-            <div
-              style={{
-                background: "oklch(0.25 0.08 20 / 0.95)",
-                border: "2px solid oklch(0.65 0.22 20)",
-                borderRadius: "999px",
-                padding: "8px 24px",
-                color: "oklch(0.95 0.05 60)",
-                fontSize: "1rem",
-                fontWeight: "bold",
-                fontFamily: "'Gowun Dodum', sans-serif",
-              }}
-            >
-              깨물어버릴 거야! 😤
-            </div>
-          </div>
-        </div>
-      )}
+
       {/* 다시 도전하기 오버레이 */}
       {showRetry && (
         <div
@@ -234,7 +186,7 @@ export default function GameLayout({
             />
             <div style={{ textAlign: "center" }}>
               <div style={{ color: "oklch(0.95 0.05 60)", fontSize: "1.1rem", fontWeight: "bold", fontFamily: "'Gowun Dodum', sans-serif", marginBottom: "4px" }}>
-                아쉽다... 😢
+                이게 정말 최선일까?
               </div>
               <div style={{ color: "oklch(0.75 0.05 280)", fontSize: "0.85rem", fontFamily: "'Gowun Dodum', sans-serif" }}>
                 다시 도전해봐! 할 수 있어! 💪

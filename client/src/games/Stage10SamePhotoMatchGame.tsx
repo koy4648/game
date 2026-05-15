@@ -46,6 +46,7 @@ export default function Stage10SamePhotoMatchGame({ stage, onComplete }: Props) 
   const [cleared, setCleared] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [hintsLeft, setHintsLeft] = useState(3);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // 게임 시작 시 카드 섞고 미리보기 보여주기
   useEffect(() => {
@@ -121,7 +122,7 @@ export default function Stage10SamePhotoMatchGame({ stage, onComplete }: Props) 
           setMatchedPairs((prev) => {
             const nextVal = prev + 1;
             if (nextVal === TARGET_SCORE) {
-              setTimeout(() => setCleared(true), 500);
+              setTimeout(onComplete, 500);
             }
             return nextVal;
           });
@@ -298,19 +299,19 @@ export default function Stage10SamePhotoMatchGame({ stage, onComplete }: Props) 
                           : "0 4px 12px rgba(0,0,0,0.3)",
                       }}
                     >
-                      <img
-                        src={`/webdev-static-assets/caricature-snap${card.imgIndex}.png`}
-                        alt={`Snap ${card.imgIndex}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // 이미지가 없을 때의 Fallback
-                          e.currentTarget.style.display = "none";
-                          const fallback = document.createElement("div");
-                          fallback.className = "flex flex-col items-center justify-center w-full h-full bg-slate-100 text-slate-800";
-                          fallback.innerHTML = `<span style="font-size: 1.5rem">📸</span><span style="font-size: 0.8rem; font-weight: bold; margin-top: 4px;">사진 ${card.imgIndex}</span>`;
-                          e.currentTarget.parentElement?.appendChild(fallback);
-                        }}
-                      />
+                      {!imageErrors[card.id] ? (
+                        <img
+                          src={`/webdev-static-assets/caricature-snap${card.imgIndex}.png`}
+                          alt={`Snap ${card.imgIndex}`}
+                          className="w-full h-full object-cover"
+                          onError={() => setImageErrors(prev => ({ ...prev, [card.id]: true }))}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full h-full bg-slate-100 text-slate-800">
+                          <span style={{ fontSize: "1.5rem" }}>📸</span>
+                          <span style={{ fontSize: "0.8rem", fontWeight: "bold", marginTop: "4px" }}>사진 {card.imgIndex}</span>
+                        </div>
+                      )}
                       {/* 매칭 완료 시 오버레이 반짝임 효과 */}
                       {card.isMatched && (
                         <div
@@ -328,43 +329,6 @@ export default function Stage10SamePhotoMatchGame({ stage, onComplete }: Props) 
           </div>
         )}
 
-        {/* ── 클리어 화면 ── */}
-        {cleared && (
-          <div
-            style={{
-              background: "oklch(0.13 0.04 280 / 0.92)",
-              border: "2px solid oklch(0.78 0.14 55 / 0.6)",
-              borderRadius: 24,
-              padding: "36px 28px",
-              maxWidth: 380,
-              width: "100%",
-              textAlign: "center",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 0 40px oklch(0.78 0.14 55 / 0.2)",
-              animation: "popIn 0.4s ease-out",
-            }}
-          >
-            <div style={{ fontSize: "3.5rem", marginBottom: 12 }}>🌸👩‍❤️‍👨🌸</div>
-            <h2
-              style={{
-                color: "oklch(0.88 0.12 55)",
-                fontFamily: "'Gowun Dodum', sans-serif",
-                fontSize: "1.25rem",
-                fontWeight: "bold",
-                marginBottom: 16,
-                lineHeight: 1.6,
-              }}
-            >
-              완벽해요!<br />우리의 예쁜 순간들이<br />모두 맞춰졌습니다 🌸
-            </h2>
-            <button
-              className="btn-star"
-              onClick={onComplete}
-              style={{ width: "100%", fontSize: "1rem" }}
-            >
-              다음 기억으로 →
-            </button>
-          </div>
-        )}
       </div>
 
       <style>{`

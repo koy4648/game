@@ -10,6 +10,7 @@ import StagePage from "./pages/StagePage";
 import QuizPage from "./pages/QuizPage";
 import Ending from "./pages/Ending";
 import StarBackground from "./components/StarBackground";
+import DevNav from "./components/DevNav";
 
 function Router() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <StarBackground />
             <Router />
             <Toaster />
+            <DevNav />
           </TooltipProvider>
         </GameProvider>
       </ThemeProvider>
