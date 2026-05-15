@@ -88,12 +88,6 @@ export default function GameLayout({
           background: "linear-gradient(to bottom, oklch(0.08 0.04 280 / 0.55), oklch(0.08 0.04 280 / 0.35))",
         }}
       />
-      {/* 전구 줄 */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex justify-center gap-6 pt-1 px-4 pointer-events-none">
-        {["🟡","🔴","🟢","🔵","🟡","🔴","🟢","🔵","🟡","🔴","🟢","🔵"].map((c, i) => (
-          <span key={i} className="text-base" style={{ animation: `twinkle ${1.2 + (i % 4) * 0.3}s ease-in-out infinite alternate` }}>{c}</span>
-        ))}
-      </div>
       {/* 상단 헤더 */}
       <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-2">
         <button
